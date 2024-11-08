@@ -4,7 +4,7 @@ import Header from '@/components/header';
 import Partenaire from '@/components/partenaire';
 import Telechargement from '@/components/telechargement';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faPause, faVolumeUp, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faVolumeUp, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ShoppingBagIcon } from '@heroicons/react/24/outline';
 
 interface Track {
@@ -126,7 +126,7 @@ export default function Page() {
                 className="bg-transparent outline-none flex-grow px-2 text-gray-700"
               />
               <button className="bg-blue-600 p-2 rounded-full">
-                <FontAwesomeIcon icon={faPlay} className="text-white" />
+                <FontAwesomeIcon icon={faSearch} className="text-white" /> {/* Search Icon */}
               </button>
             </div>
           </div>
@@ -149,10 +149,15 @@ export default function Page() {
                       setIsHovered(false); // Resume the carousel
                     }}
                   />
-                  {/* Afficher le lecteur sur le hover uniquement sur la couverture */}
+                  {/* Overlay with Play Button on Hover */}
                   {hoveredTrack === covers[currentCoverIndex] && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 text-white rounded-md">
-                      <button onClick={() => handlePlayTrack(hoveredTrack)} className="text-4xl">
+                    <div
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 text-white rounded-md pointer-events-none"
+                    >
+                      <button
+                        onClick={() => handlePlayTrack(hoveredTrack)}
+                        className="text-4xl cursor-pointer pointer-events-auto"
+                      >
                         <FontAwesomeIcon icon={faPlay} />
                       </button>
                     </div>
