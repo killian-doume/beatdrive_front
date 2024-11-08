@@ -32,7 +32,7 @@ export default function Header() {
 
           <PopoverGroup className="hidden lg:flex lg:gap-x-12">
             <Link href="/track" className="text-sm/6 font-semibold text-gray-900">
-              Tracks
+              Track
             </Link>
             <Link href="/pricing" className="text-sm/6 font-semibold text-gray-900">
               Prix
