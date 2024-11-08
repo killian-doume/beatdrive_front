@@ -4,7 +4,7 @@ export default function Login() {
   return (
     <>
       <div className="hidden lg:flex lg:flex-1 pl-10 pt-4 bg-white">
-        <Link href="javascript:history.back()" className="text-sm font-semibold text-gray-900">
+        <Link href="/" className="text-sm font-semibold text-gray-900">
           <span aria-hidden="true" className="text-2xl">&larr;</span>
         </Link>
       </div>

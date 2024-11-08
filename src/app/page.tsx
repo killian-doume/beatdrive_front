@@ -1,12 +1,14 @@
 'use client'
-import { useState } from 'react'
+import Header from '@/components/header'
+import Partenaire from '@/components/partenaire'
 
-export default function Example() {
+export default function Page() {
 
 
   return (
     <>
-      
+     <Header />
+      <Partenaire/>
     </>
   )
 }
