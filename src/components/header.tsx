@@ -5,14 +5,18 @@ import { ShoppingBagIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect } from 'react'
 
 export default function Header() {
-  // Simule l'état d'authentification. Remplace cette logique par la vraie vérification d'authentification.
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Vérifie l'état de l'authentification (à adapter selon ton mécanisme d'authentification réel)
-    // Par exemple, tu peux vérifier un token JWT ici.
-    const token = localStorage.getItem('authToken') // Exemple de token dans localStorage
-    setIsAuthenticated(!!token)
+    console.log('Tous les cookies:', document.cookie)
+
+    const cookies = document.cookie.split(';').map(cookie => cookie.trim())
+    console.log('Cookies divisés:', cookies)
+
+    const sessionCookie = cookies.find(cookie => cookie.startsWith('JSESSIONID='))
+    console.log('Cookie JSESSIONID trouvé:', sessionCookie)
+
+    setIsAuthenticated(!!sessionCookie)
   }, [])
 
   return (
@@ -46,10 +50,12 @@ export default function Header() {
               <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
             </Link>
             {isAuthenticated ? (
+              // Si authentifié, afficher l'icône de profil
               <Link href="/profile" className="text-gray-900 hover:text-gray-700">
                 <UserCircleIcon className="h-6 w-6" aria-hidden="true" />
               </Link>
             ) : (
+              // Sinon, afficher le lien Connexion
               <Link href="/login" className="text-sm font-semibold text-gray-900">
                 Connexion <span aria-hidden="true">&rarr;</span>
               </Link>
