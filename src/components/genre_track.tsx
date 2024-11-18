@@ -38,7 +38,7 @@ export default function GenreTrack() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-black">Genre populaire</h1>
-            <a href="/track" className="text-purple-600 hover:underline font-medium">
+            <a href="/track" className="text-black hover:underline font-medium">
               Voir plus
             </a>
           </div>

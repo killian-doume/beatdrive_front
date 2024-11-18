@@ -9,35 +9,37 @@ export default function Login() {
   const [error, setError] = useState(null);
   const router = useRouter(); 
 
-  const handleSubmit = async (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-
+  
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account`, {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
-          "Authorization":"Basic "+btoa(email+':'+password)
+          "Authorization": "Basic " + btoa(email + ':' + password)
         },
-       credentials:'include'
+        credentials: 'include'
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         console.log("Connexion réussie :", data);
-
+  
+        // Stocker les données utilisateur dans le Local Storage
+        localStorage.setItem("user", JSON.stringify(data));
+  
+        // Rediriger vers la page d'accueil
         router.push("/");
       } else {
-        const errorData = await response.json(); 
+        const errorData = await response.json();
         console.log("Erreur lors de la connexion :", errorData.message || "Échec de la connexion.");
-        
       }
     } catch (err) {
       console.error("Erreur lors de la requête :", err);
-    
     }
   };
+  
 
   return (
     <>
@@ -75,7 +77,7 @@ export default function Login() {
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+                    className="block w-full rounded-md border-0 py-1.5 pl-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
               </div>
@@ -93,7 +95,7 @@ export default function Login() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+                    className="block w-full rounded-md border-0 py-1.5 pl-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                   />
                 </div>
               </div>
