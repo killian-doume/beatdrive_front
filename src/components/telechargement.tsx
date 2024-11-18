@@ -1,4 +1,4 @@
-// src/components/telechargement.tsx
+
 
 import Image from 'next/image'
 

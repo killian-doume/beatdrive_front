@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Partenaire from '@/components/partenaire';
@@ -6,6 +7,8 @@ import Telechargement from '@/components/telechargement';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faVolumeUp, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ShoppingBagIcon } from '@heroicons/react/24/outline';
+import Tendance_track from '@/components/tendance_track';
+import GenreTrack from '@/components/genre_track';
 
 interface Track {
   cover: string;
@@ -115,60 +118,64 @@ export default function Page() {
     <>
       <Header />
       <div className="bg-black py-8">
-        <div className="container mx-auto flex items-center justify-between max-w-5xl">
-          {/* Left Side: Text and Search Bar */}
-          <div className="w-full md:w-1/2 flex flex-col items-start mr-8">
-            <h2 className="text-white text-lg font-semibold mb-4">Votre premier hit commence ici</h2>
-            <div className="flex items-center bg-gray-200 p-2 rounded-full shadow-md w-full">
-              <input
-                type="text"
-                placeholder="Recherchez votre hit..."
-                className="bg-transparent outline-none flex-grow px-2 text-gray-700"
-              />
-              <button className="bg-blue-600 p-2 rounded-full">
-                <FontAwesomeIcon icon={faSearch} className="text-white" /> {/* Search Icon */}
-              </button>
-            </div>
-          </div>
-          {/* Right Side: Carousel of Covers */}
-          <div className="w-full md:w-1/2 flex justify-center md:justify-end mt-8 md:mt-0 ml-8">
-            {covers.length > 0 && (
-              <div className="carousel">
-                <div className="relative">
-                  <img
-                    src={covers[currentCoverIndex].cover}
-                    alt={`Cover ${currentCoverIndex + 1}`}
-                    className="rounded-md border border-gray-300 shadow-md max-w-2xl transition-opacity duration-1000 ease-in-out cursor-pointer"
-                    onClick={() => handlePlayTrack(covers[currentCoverIndex])}
-                    onMouseEnter={() => {
-                      setHoveredTrack(covers[currentCoverIndex]);
-                      setIsHovered(true); // Stop the carousel
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredTrack(null);
-                      setIsHovered(false); // Resume the carousel
-                    }}
-                  />
-                  {/* Overlay with Play Button on Hover */}
-                  {hoveredTrack === covers[currentCoverIndex] && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 text-white rounded-md pointer-events-none"
-                    >
-                      <button
-                        onClick={() => handlePlayTrack(hoveredTrack)}
-                        className="text-4xl cursor-pointer pointer-events-auto"
-                      >
-                        <FontAwesomeIcon icon={faPlay} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+  <div className="container mx-auto flex flex-col items-center justify-center lg:flex-row lg:justify-between max-w-5xl">
+    {/* Texte centré en mode mobile et aligné à gauche en lg */}
+    <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start mb-6 lg:mb-0">
+      <h2 className="text-white text-lg font-semibold text-center lg:text-left">
+        Votre premier hit commence ici
+      </h2>
+      {/* Barre de recherche centrée en mode mobile et alignée comme en lg */}
+      <div className="flex items-center bg-gray-200 p-2 rounded-full shadow-md w-11/12 sm:w-2/3 lg:w-full mt-4 lg:mt-0">
+        <input
+          type="text"
+          placeholder="Recherchez votre hit..."
+          className="bg-transparent outline-none flex-grow px-2 text-gray-700"
+        />
+        <button className="bg-blue-600 p-2 rounded-full">
+          <FontAwesomeIcon icon={faSearch} className="text-white" /> {/* Search Icon */}
+        </button>
+      </div>
+    </div>
+
+    {/* Cover centrée en mode mobile et alignée comme en lg */}
+    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-8 lg:mt-0">
+      {covers.length > 0 && (
+        <div className="carousel">
+          <div className="relative">
+            <img
+              src={covers[currentCoverIndex].cover}
+              alt={`Cover ${currentCoverIndex + 1}`}
+              className="w-full max-w-sm h-auto max-h-72 rounded-md border border-gray-300 shadow-md transition-opacity duration-1000 ease-in-out cursor-pointer object-contain"
+              onClick={() => handlePlayTrack(covers[currentCoverIndex])}
+              onMouseEnter={() => {
+                setHoveredTrack(covers[currentCoverIndex]);
+                setIsHovered(true); // Stop the carousel
+              }}
+              onMouseLeave={() => {
+                setHoveredTrack(null);
+                setIsHovered(false); // Resume the carousel
+              }}
+            />
+            {/* Overlay avec bouton Play sur Hover */}
+            {hoveredTrack === covers[currentCoverIndex] && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 text-white rounded-md pointer-events-none">
+                <button
+                  onClick={() => handlePlayTrack(hoveredTrack)}
+                  className="text-4xl cursor-pointer pointer-events-auto"
+                >
+                  <FontAwesomeIcon icon={faPlay} />
+                </button>
               </div>
             )}
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  </div>
+</div>
 
+      <Tendance_track />
+      <GenreTrack />
       <Partenaire />
       <Telechargement />
 
