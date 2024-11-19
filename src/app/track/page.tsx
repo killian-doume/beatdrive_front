@@ -17,6 +17,7 @@ interface Track {
   user: {
     pseudo: string;
   };
+  createdAt: string; // Ajout pour trier par date
 }
 
 interface LicenceTrack {
@@ -83,6 +84,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
 export default function TrackPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [filteredTracks, setFilteredTracks] = useState<Track[]>([]);
+  const [visibleTracks, setVisibleTracks] = useState<Track[]>([]); // Tracks affichés
   const [prices, setPrices] = useState<{ [id_track: number]: string }>({});
   const [notification, setNotification] = useState<string | null>(null);
   const [filters, setFilters] = useState({ type: "", genre: "", cle: "" });
@@ -98,10 +100,13 @@ export default function TrackPage() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
-        setTracks(data);
-        setFilteredTracks(data);
 
-        // Extraire dynamiquement les valeurs uniques pour les filtres
+        // Trier les tracks par date (du plus récent au plus ancien)
+        const sortedTracks = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setTracks(sortedTracks);
+        setFilteredTracks(sortedTracks);
+        setVisibleTracks(sortedTracks.slice(0, 6)); // Afficher les 6 premiers morceaux
+
         const types = Array.from(new Set(data.map((track) => track.type))).sort();
         const genres = Array.from(new Set(data.map((track) => track.genre))).sort();
         const keys = Array.from(new Set(data.map((track) => track.cle))).sort();
@@ -150,13 +155,19 @@ export default function TrackPage() {
     });
 
     setFilteredTracks(filtered);
+    setVisibleTracks(filtered.slice(0, 6)); // Réinitialiser l'affichage à 6 morceaux
+  };
+
+  const handleShowMore = () => {
+    const nextTracks = filteredTracks.slice(visibleTracks.length, visibleTracks.length + 6);
+    setVisibleTracks([...visibleTracks, ...nextTracks]);
   };
 
   const handlePlayTrack = (track: Track) => {
     if (activeTrack?.id_track !== track.id_track) {
-      setActiveTrack(null); // Arrêter la lecture actuelle
+      setActiveTrack(null);
       setTimeout(() => {
-        setActiveTrack(track); // Démarrer la nouvelle musique après un court délai
+        setActiveTrack(track);
       }, 100);
     }
   };
@@ -164,7 +175,6 @@ export default function TrackPage() {
   const handleAddToCart = (track: Track) => {
     const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    // Vérifiez si l'id_track existe déjà dans le panier
     const isTrackInCart = existingCart.some((item: { id_track: number }) => item.id_track === track.id_track);
 
     if (isTrackInCart) {
@@ -176,8 +186,8 @@ export default function TrackPage() {
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
       setTimeout(() => {
-        setNotification(null); 
-        window.location.reload(); 
+        setNotification(null);
+        window.location.reload();
       }, 3000);
     }
   };
@@ -238,7 +248,7 @@ export default function TrackPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {filteredTracks.map((track) => (
+            {visibleTracks.map((track) => (
               <div
                 key={track.id_track}
                 className="bg-black p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 text-white"
@@ -273,6 +283,17 @@ export default function TrackPage() {
               </div>
             ))}
           </div>
+
+          {visibleTracks.length < filteredTracks.length && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleShowMore}
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600"
+              >
+                Plus de tracks
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
