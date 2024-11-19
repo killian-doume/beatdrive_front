@@ -30,7 +30,7 @@ interface LicenceTrack {
 
 function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(1); // Volume (1 = 100%)
   const audioRef = useState(new Audio(track.audio))[0];
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
 
     return () => {
       audioRef.pause();
-      audioRef.currentTime = 0;
+      audioRef.currentTime = 0; // Réinitialiser la piste
     };
   }, [isPlaying, audioRef, volume]);
 
@@ -84,10 +84,8 @@ export default function TrackPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [filteredTracks, setFilteredTracks] = useState<Track[]>([]);
   const [prices, setPrices] = useState<{ [id_track: number]: string }>({});
+  const [notification, setNotification] = useState<string | null>(null);
   const [filters, setFilters] = useState({ type: "", genre: "", cle: "" });
-  const [uniqueTypes, setUniqueTypes] = useState<string[]>([]);
-  const [uniqueGenres, setUniqueGenres] = useState<string[]>([]);
-  const [uniqueKeys, setUniqueKeys] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
 
   const router = useRouter();
@@ -97,18 +95,8 @@ export default function TrackPage() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
-
         setTracks(data);
         setFilteredTracks(data);
-
-        // Extraire dynamiquement les valeurs uniques pour les filtres
-        const types = Array.from(new Set(data.map((track) => track.type))).sort();
-        const genres = Array.from(new Set(data.map((track) => track.genre))).sort();
-        const keys = Array.from(new Set(data.map((track) => track.cle))).sort();
-
-        setUniqueTypes(types);
-        setUniqueGenres(genres);
-        setUniqueKeys(keys);
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
@@ -154,9 +142,9 @@ export default function TrackPage() {
 
   const handlePlayTrack = (track: Track) => {
     if (activeTrack?.id_track !== track.id_track) {
-      setActiveTrack(null);
+      setActiveTrack(null); // Arrêter la lecture actuelle
       setTimeout(() => {
-        setActiveTrack(track);
+        setActiveTrack(track); // Démarrer la nouvelle musique après un court délai
       }, 100);
     }
   };
@@ -164,16 +152,39 @@ export default function TrackPage() {
   const handleAddToCart = (track: Track) => {
     const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    const trackPrice = prices[track.id_track] || "0.00";
-    const updatedCart = [...existingCart, { ...track, price: trackPrice }];
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    // Vérifiez si l'id_track existe déjà dans le panier
+    const isTrackInCart = existingCart.some((item: { id_track: number }) => item.id_track === track.id_track);
+
+    if (isTrackInCart) {
+      // Notification pour informer que le morceau est déjà dans le panier
+      setNotification(`"${track.titre}" est déjà dans votre panier.`);
+      setTimeout(() => setNotification(null), 3000); // Supprimer la notification après 3 secondes
+    } else {
+      // Ajout du morceau au panier
+      const trackPrice = prices[track.id_track] || "0.00";
+      const updatedCart = [...existingCart, { ...track, price: trackPrice }];
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
+
+      // Supprimer la notification et recharger la page après 3 secondes
+      setTimeout(() => {
+        setNotification(null); // Supprime la notification
+        window.location.reload(); // Recharge la page
+      }, 3000);
+    }
   };
+
 
   return (
     <>
       <Header />
       <div className="bg-gray-100 p-8">
         <div className="max-w-7xl mx-auto">
+          {notification && (
+            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg">
+              {notification}
+            </div>
+          )}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
             <h1 className="text-3xl font-bold text-black">Tous les morceaux</h1>
             <div className="flex flex-row justify-between lg:justify-end gap-4 mt-4 lg:mt-0 w-full lg:w-auto">
@@ -184,11 +195,7 @@ export default function TrackPage() {
                 className="p-2 border rounded-md text-black w-full sm:w-auto"
               >
                 <option value="">Type</option>
-                {uniqueTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
+                {/* Ajouter les options dynamiquement si nécessaire */}
               </select>
               <select
                 name="genre"
@@ -197,11 +204,6 @@ export default function TrackPage() {
                 className="p-2 border rounded-md text-black w-full sm:w-auto"
               >
                 <option value="">Genre</option>
-                {uniqueGenres.map((genre) => (
-                  <option key={genre} value={genre}>
-                    {genre}
-                  </option>
-                ))}
               </select>
               <select
                 name="cle"
@@ -210,11 +212,6 @@ export default function TrackPage() {
                 className="p-2 border rounded-md text-black w-full sm:w-auto"
               >
                 <option value="">Clé</option>
-                {uniqueKeys.map((key) => (
-                  <option key={key} value={key}>
-                    {key}
-                  </option>
-                ))}
               </select>
             </div>
           </div>
