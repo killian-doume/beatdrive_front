@@ -10,16 +10,14 @@ import {
   MenuButton,
   MenuItem,
   MenuItems,
-  PopoverGroup,
+  Popover,
+  PopoverButton,
+  PopoverPanel,
 } from '@headlessui/react';
-import {
-  Bars3Icon,
-  XMarkIcon,
-  ShoppingBagIcon,
-} from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
-// Interface définissant les propriétés de l'utilisateur
 interface User {
   accountNonExpired: boolean;
   accountNonLocked: boolean;
@@ -39,65 +37,53 @@ interface User {
   username: string;
 }
 
+interface CartItem {
+  id_track: number;
+  titre: string;
+  cover: string;
+  price: string;
+}
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null); // Déclare l'utilisateur connecté
-  const [cartCount, setCartCount] = useState<number>(0); // État pour le compteur du panier
+  const [user, setUser] = useState<User | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    // Vérifie si un utilisateur est stocké dans le localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        const parsedUser: User = JSON.parse(storedUser); // Parse les données utilisateur
-        setUser(parsedUser); // Met à jour l'état utilisateur
-        setIsAuthenticated(true); // L'utilisateur est authentifié
-      } catch (error) {
-        console.error('Erreur lors du parsing des données utilisateur :', error);
+        const parsedUser: User = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch {
         setIsAuthenticated(false);
       }
-    } else {
-      setIsAuthenticated(false);
     }
 
-    // Vérifie les éléments dans le cart
-    const updateCartCount = () => {
-      const cart = localStorage.getItem('cart');
-      if (cart) {
-        try {
-          const parsedCart = JSON.parse(cart);
-          setCartCount(parsedCart.length); // Met à jour le compteur en fonction du nombre d'éléments
-        } catch (error) {
-          console.error('Erreur lors du parsing du cart :', error);
-          setCartCount(0);
-        }
-      } else {
-        setCartCount(0);
+    const cart = localStorage.getItem('cart');
+    if (cart) {
+      try {
+        const parsedCart: CartItem[] = JSON.parse(cart);
+        setCartItems(parsedCart);
+      } catch {
+        setCartItems([]);
       }
-    };
-
-    updateCartCount();
-
-    // Ajoute un Event Listener pour surveiller les modifications du localStorage
-    window.addEventListener('storage', updateCartCount);
-
-    return () => {
-      window.removeEventListener('storage', updateCartCount); // Nettoie l'Event Listener
-    };
+    }
   }, []);
 
-  // Fonction pour gérer la déconnexion
   const handleSignOut = () => {
-    // Supprime les données utilisateur du Local Storage
     localStorage.removeItem('user');
-
-    // Réinitialise l'état
     setIsAuthenticated(false);
     setUser(null);
-
-    // Recharge la page pour refléter les changements
     window.location.reload();
+  };
+
+  const handleRemoveItem = (id: number) => {
+    const updatedCart = cartItems.filter((item) => item.id_track !== id);
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart)); // Met à jour le localStorage
   };
 
   return (
@@ -124,7 +110,7 @@ export default function Header() {
         </div>
 
         {/* Desktop Navigation */}
-        <PopoverGroup className="hidden lg:flex lg:gap-x-12">
+        <Popover.Group className="hidden lg:flex lg:gap-x-12">
           <Link href="/track" className="text-sm font-semibold text-gray-900">
             Track
           </Link>
@@ -134,41 +120,78 @@ export default function Header() {
           <Link href="/about" className="text-sm font-semibold text-gray-900">
             A propos
           </Link>
-        </PopoverGroup>
+        </Popover.Group>
+
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
-          {/* Panier avec compteur */}
-          <Link href="/panier" className="relative text-gray-900 hover:text-gray-700">
-            <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs">
-                {cartCount}
+          {/* Panier avec menu déroulant */}
+          <Popover className="relative">
+            <PopoverButton className="group -m-2 flex items-center p-2">
+              <ShoppingBagIcon
+                aria-hidden="true"
+                className="h-6 w-6 text-gray-700 group-hover:text-gray-900"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                {cartItems.length}
               </span>
-            )}
-          </Link>
+            </PopoverButton>
+            <PopoverPanel
+              className="absolute right-0 mt-2 w-80 rounded-md bg-white shadow-lg ring-1 ring-black/5 z-50"
+            >
+              <h2 className="sr-only">Panier</h2>
+              {cartItems.length > 0 ? (
+                <ul className="divide-y divide-gray-200 p-4">
+                  {cartItems.map((item) => (
+                    <li key={item.id_track} className="flex items-center py-4">
+                      <img
+                        alt={`Cover de ${item.titre}`}
+                        src={item.cover}
+                        className="h-16 w-16 flex-none rounded-md border border-gray-200"
+                      />
+                      <div className="ml-4 flex-auto">
+                        <h3 className="font-medium text-gray-900">{item.titre}</h3>
+                        <p className="text-sm text-gray-500">{item.price} €</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveItem(item.id_track)}
+                        className="text-red-500 hover:text-red-700"
+                        title="Supprimer cet article"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="p-4 text-center text-gray-500">Votre panier est vide.</p>
+              )}
+              {cartItems.length > 0 && (
+                <div className="p-4">
+                  <Link
+                    href="/panier"
+                    className="block w-full rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700"
+                  >
+                    Aller au panier
+                  </Link>
+                </div>
+              )}
+            </PopoverPanel>
+
+          </Popover>
 
           {isAuthenticated ? (
             <Menu as="div" className="relative ml-3">
-              <div>
-                <MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                  <span className="sr-only">Open user menu</span>
-                  <img
-                    alt="User Avatar"
-                    src={user?.avatar || "https://via.placeholder.com/150"} // Avatar dynamique ou image par défaut
-                    className="h-8 w-8 rounded-full"
-                  />
-                </MenuButton>
-              </div>
-              <MenuItems
-                transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
-              >
-                {user?.pseudo && (
-                  <MenuItem>
-                    <div className="block px-4 py-2 text-sm text-center text-gray-700">
-                      {user.pseudo} {/* Pseudo de l'utilisateur connecté */}
-                    </div>
-                  </MenuItem>
-                )}
+              <MenuButton className="relative flex rounded-full bg-gray-800 text-sm">
+                <span className="sr-only">Open user menu</span>
+                <img
+                  alt="User Avatar"
+                  src={user?.avatar || 'https://via.placeholder.com/150'}
+                  className="h-8 w-8 rounded-full"
+                />
+              </MenuButton>
+              <MenuItems className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5">
+                <MenuItem>
+                  <div className="block px-4 py-2 text-sm text-center text-gray-700">{user?.pseudo}</div>
+                </MenuItem>
                 <MenuItem>
                   <Link
                     href="/mon_compte"
@@ -180,9 +203,9 @@ export default function Header() {
                 <MenuItem>
                   <button
                     onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-gray-100"
+                    className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
                   >
-                    Sign out
+                    Déconnexion
                   </button>
                 </MenuItem>
               </MenuItems>
@@ -219,16 +242,28 @@ export default function Header() {
                 <Disclosure as="div" className="-mx-3">
                   <Disclosure.Button className="group flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold text-gray-900 hover:bg-gray-50">
                     Menu
-                    <ChevronDownIcon className="h-5 w-5 text-gray-400 group-hover:text-gray-700" aria-hidden="true" />
+                    <ChevronDownIcon
+                      className="h-5 w-5 text-gray-400 group-hover:text-gray-700"
+                      aria-hidden="true"
+                    />
                   </Disclosure.Button>
                   <Disclosure.Panel className="mt-2 space-y-2">
-                    <Link href="/track" className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                    <Link
+                      href="/track"
+                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    >
                       Track
                     </Link>
-                    <Link href="/pricing" className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                    <Link
+                      href="/pricing"
+                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    >
                       Prix
                     </Link>
-                    <Link href="/about" className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                    <Link
+                      href="/about"
+                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    >
                       A propos
                     </Link>
                   </Disclosure.Panel>
@@ -237,31 +272,30 @@ export default function Header() {
               <div className="py-6">
                 {isAuthenticated ? (
                   <div className="flex flex-col items-center space-y-4">
-                    {/* Avatar */}
                     <img
                       alt="User Avatar"
-                      src={user?.avatar || "https://via.placeholder.com/150"} // Avatar dynamique ou image par défaut
+                      src={user?.avatar || 'https://via.placeholder.com/150'}
                       className="h-16 w-16 rounded-full"
                     />
-                    {/* Pseudo */}
                     <div className="text-sm font-semibold text-gray-700">{user?.pseudo}</div>
-                    {/* Mon compte */}
                     <Link
                       href="/mon_compte"
                       className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
                     >
                       Mon compte
                     </Link>
-                    {/* Sign out */}
                     <button
                       onClick={handleSignOut}
-                      className="block w-full text-left rounded-lg px-4 py-2 text-base text-center font-semibold text-red-500 hover:text-red-600 hover:bg-gray-50"
+                      className="block w-full text-left rounded-lg px-4 py-2 text-base text-center font-semibold text-red-500 hover:bg-gray-50"
                     >
-                      Sign out
+                      Déconnexion
                     </button>
                   </div>
                 ) : (
-                  <Link href="/login" className="block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-gray-50">
+                  <Link
+                    href="/login"
+                    className="block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-gray-50"
+                  >
                     Connexion
                   </Link>
                 )}
