@@ -176,8 +176,8 @@ export default function TrackPage() {
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
       setTimeout(() => {
-        setNotification(null); // Supprime la notification
-        window.location.reload(); // Recharge la page
+        setNotification(null); 
+        window.location.reload(); 
       }, 3000);
     }
   };

@@ -192,7 +192,10 @@ export default function Header() {
                 className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 z-50"
               >
                 <MenuItem>
-                  <div className="block px-4 py-2 text-sm text-center text-gray-700">{user?.pseudo}</div>
+                  <div className="block px-4 py-2 text-sm text-center font-bold text-gray-700">
+                    {user?.pseudo}
+                  </div>
+
                 </MenuItem>
                 <MenuItem>
                   <Link
@@ -273,6 +276,44 @@ export default function Header() {
                 </Disclosure>
               </div>
               <div className="py-6">
+                {cartItems.length > 0 ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-900">Votre Panier</h3>
+                    <ul className="space-y-4">
+                      {cartItems.map((item) => (
+                        <li key={item.id_track} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <img
+                              alt={`Cover de ${item.titre}`}
+                              src={item.cover}
+                              className="h-12 w-12 rounded-md object-cover"
+                            />
+                            <div className="ml-3">
+                              <p className="text-sm font-semibold text-gray-900">{item.titre}</p>
+                              <p className="text-sm text-gray-500">{item.price} €</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveItem(item.id_track)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href="/panier"
+                      className="block rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700"
+                    >
+                      Aller au panier
+                    </Link>
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500">Votre panier est vide.</p>
+                )}
+              </div>
+              <div className="py-6">
                 {isAuthenticated ? (
                   <div className="flex flex-col items-center space-y-4">
                     <img
@@ -280,7 +321,7 @@ export default function Header() {
                       src={user?.avatar || 'https://via.placeholder.com/150'}
                       className="h-16 w-16 rounded-full"
                     />
-                    <div className="text-sm font-semibold text-gray-700">{user?.pseudo}</div>
+                    <div className="text-sm font-bold text-gray-700">{user?.pseudo}</div>
                     <Link
                       href="/mon_compte"
                       className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
@@ -307,6 +348,7 @@ export default function Header() {
           </div>
         </DialogPanel>
       </Dialog>
+
     </header>
   );
 }
