@@ -43,6 +43,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null); // Déclare l'utilisateur connecté
+  const [cartCount, setCartCount] = useState<number>(0); // État pour le compteur du panier
 
   useEffect(() => {
     // Vérifie si un utilisateur est stocké dans le localStorage
@@ -59,6 +60,31 @@ export default function Header() {
     } else {
       setIsAuthenticated(false);
     }
+
+    // Vérifie les éléments dans le cart
+    const updateCartCount = () => {
+      const cart = localStorage.getItem('cart');
+      if (cart) {
+        try {
+          const parsedCart = JSON.parse(cart);
+          setCartCount(parsedCart.length); // Met à jour le compteur en fonction du nombre d'éléments
+        } catch (error) {
+          console.error('Erreur lors du parsing du cart :', error);
+          setCartCount(0);
+        }
+      } else {
+        setCartCount(0);
+      }
+    };
+
+    updateCartCount();
+
+    // Ajoute un Event Listener pour surveiller les modifications du localStorage
+    window.addEventListener('storage', updateCartCount);
+
+    return () => {
+      window.removeEventListener('storage', updateCartCount); // Nettoie l'Event Listener
+    };
   }, []);
 
   // Fonction pour gérer la déconnexion
@@ -110,8 +136,14 @@ export default function Header() {
           </Link>
         </PopoverGroup>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
-          <Link href="/panier" className="text-gray-900 hover:text-gray-700">
+          {/* Panier avec compteur */}
+          <Link href="/panier" className="relative text-gray-900 hover:text-gray-700">
             <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs">
+                {cartCount}
+              </span>
+            )}
           </Link>
 
           {isAuthenticated ? (
@@ -238,7 +270,6 @@ export default function Header() {
           </div>
         </DialogPanel>
       </Dialog>
-
     </header>
   );
 }

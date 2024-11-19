@@ -84,8 +84,6 @@ export default function TrackPage() {
     const [uniqueGenres, setUniqueGenres] = useState<string[]>([]);
     const [uniqueKeys, setUniqueKeys] = useState<string[]>([]);
     const [activeTrack, setActiveTrack] = useState<Track | null>(null);
-    const [notification, setNotification] = useState<string | null>(null);
-
     const router = useRouter();
 
     useEffect(() => {
@@ -145,25 +143,12 @@ export default function TrackPage() {
         const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
         const updatedCart = [...existingCart, track];
         localStorage.setItem("cart", JSON.stringify(updatedCart));
-
-        // Mettre à jour la notification
-        setNotification(`"${track.titre}" a été ajouté au panier.`);
-
-        // Supprimer la notification après 3 secondes
-        setTimeout(() => setNotification(null), 3000);
+        alert(`"${track.titre}" a été ajouté au panier.`);
     };
-
 
     return (
         <>
             <Header />
-            {notification && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-md shadow-lg flex items-center gap-2 z-50 text-sm sm:text-base">
-                    <FontAwesomeIcon icon={faShoppingCart} />
-                    <span>{notification}</span>
-                </div>
-            )}
-
             <div className="bg-gray-100 p-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Titre et Filtres */}
@@ -228,11 +213,10 @@ export default function TrackPage() {
                                     {/* Bouton Play affiché au survol */}
                                     <button
                                         onClick={() => handlePlayTrack(track)}
-                                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 w-12 h-12 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-3 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                     >
                                         <FontAwesomeIcon icon={faPlay} />
                                     </button>
-
                                 </div>
                                 <a
                                     href={`/track/${track.id_track}`}
