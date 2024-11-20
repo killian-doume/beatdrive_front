@@ -251,7 +251,7 @@ export default function TrackPage() {
             {visibleTracks.map((track) => (
               <div
                 key={track.id_track}
-                className="bg-black p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 text-white"
+                className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 text-white"
               >
                 <div className="relative w-full h-48 mb-4 group">
                   <img
@@ -261,21 +261,21 @@ export default function TrackPage() {
                   />
                   <button
                     onClick={() => handlePlayTrack(track)}
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-3 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-3 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-12 h-12 flex items-center justify-center"
                   >
                     <FontAwesomeIcon icon={faPlay} />
                   </button>
                 </div>
                 <a
                   href={`/track/${track.id_track}`}
-                  className="text-lg font-semibold hover:underline"
+                  className="text-lg text-black font-semibold hover:underline"
                 >
                   {track.titre}
                 </a>
-                <p className="text-gray-400 mb-4">{track.user.pseudo}</p>
+                <p className="text-gray-400 mb-4">By : {track.user.pseudo}</p>
                 <button
                   onClick={() => handleAddToCart(track)}
-                  className="bg-blue-500 text-white w-full px-6 py-2 rounded-md hover:bg-blue-600 flex items-center justify-center gap-2"
+                  className="bg-indigo-600 text-white w-full px-6 py-2 rounded-md hover:bg-indigo-500 flex items-center justify-center gap-2"
                 >
                   <FontAwesomeIcon icon={faShoppingCart} />
                   €{prices[track.id_track] || "0.00"}
@@ -288,7 +288,7 @@ export default function TrackPage() {
             <div className="flex justify-center mt-6">
               <button
                 onClick={handleShowMore}
-                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-md "
               >
                 Plus de tracks
               </button>

@@ -59,7 +59,7 @@ export default function Home() {
               />
               <h2 className="text-lg font-semibold text-black mb-1">{track.titre}</h2>
               <p className="text-gray-500 mb-2">By : {track.user.pseudo}</p>
-              <button className="bg-black text-white px-4 py-2 rounded-md hover:bg-purple-700">
+              <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-500">
                 Voir les détails
               </button>
             </div>

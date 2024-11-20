@@ -131,7 +131,7 @@ export default function Page() {
           placeholder="Recherchez votre hit..."
           className="bg-transparent outline-none flex-grow px-2 text-gray-700"
         />
-        <button className="bg-blue-600 p-2 rounded-full">
+       <button className="bg-blue-600 p-2 rounded-full w-10 h-10 flex items-center justify-center">
           <FontAwesomeIcon icon={faSearch} className="text-white" /> {/* Search Icon */}
         </button>
       </div>
