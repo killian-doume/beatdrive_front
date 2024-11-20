@@ -1,5 +1,5 @@
 "use client";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import { ArrowUpTrayIcon, CheckIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -36,7 +36,7 @@ export default function Login() {
         password,
         telephone,
         type,
-        avatar: avatar || "https://via.placeholder.com/150", // Avatar par défaut si vide
+        avatar: avatar || "https://t4.ftcdn.net/jpg/03/49/49/79/360_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.webp", // Avatar par défaut si vide
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
@@ -143,6 +143,41 @@ export default function Login() {
                   />
                 </div>
                 <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+                    Mot de passe
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full rounded-md border-0 py-1.5 pl-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-900">
+                    Retaper votre mot de passe
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="block w-full rounded-md border-0 py-1.5 pl-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                    />
+                    {passwordsMatch && (
+                      <CheckIcon
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 w-5 h-5"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div>
                   <label htmlFor="telephone" className="block text-sm font-medium text-gray-900">
                     Téléphone
                   </label>
@@ -174,28 +209,13 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Composant Dropzone pour l'upload de cover */}
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="dropzone-file"
                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-100"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg
-                      className="w-8 h-8 mb-4 text-gray-400"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 20 16"
-                    >
-                      <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                      />
-                    </svg>
+                    <ArrowUpTrayIcon className="w-8 h-8 mb-4 text-gray-400" />
                     <p className="mb-2 text-sm text-gray-500">
                       <span className="font-semibold">Cliquez pour télécharger</span> ou faites glisser et déposez
                     </p>
@@ -216,7 +236,6 @@ export default function Login() {
                   />
                 </label>
               </div>
-
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
 
