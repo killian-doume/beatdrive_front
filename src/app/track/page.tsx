@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/header";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faVolumeUp, faTimes, faShoppingCart } from "@fortawesome/free-solid-svg-icons";
@@ -94,6 +94,7 @@ export default function TrackPage() {
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchTracks = async () => {
@@ -104,8 +105,14 @@ export default function TrackPage() {
         // Trier les tracks par date (du plus récent au plus ancien)
         const sortedTracks = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setTracks(sortedTracks);
-        setFilteredTracks(sortedTracks);
-        setVisibleTracks(sortedTracks.slice(0, 6)); // Afficher les 6 premiers morceaux
+
+        const genreQuery = searchParams.get("genre") || "";
+        const filtered = genreQuery
+          ? sortedTracks.filter((track) => track.genre === genreQuery)
+          : sortedTracks;
+
+        setFilteredTracks(filtered);
+        setVisibleTracks(filtered.slice(0, 6)); // Afficher les 6 premiers morceaux
 
         const types = Array.from(new Set(data.map((track) => track.type))).sort();
         const genres = Array.from(new Set(data.map((track) => track.genre))).sort();
@@ -114,6 +121,9 @@ export default function TrackPage() {
         setUniqueTypes(types);
         setUniqueGenres(genres);
         setUniqueKeys(keys);
+
+        // Appliquer le filtre initial si présent dans l'URL
+        setFilters((prevFilters) => ({ ...prevFilters, genre: genreQuery }));
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
@@ -139,7 +149,7 @@ export default function TrackPage() {
 
     fetchTracks();
     fetchPrices();
-  }, []);
+  }, [searchParams]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
