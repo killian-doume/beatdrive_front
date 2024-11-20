@@ -1,5 +1,5 @@
 "use client";
-import { ArrowUpTrayIcon, CheckIcon } from "@heroicons/react/20/solid";
+import { ArrowUpTrayIcon, CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -14,6 +14,7 @@ export default function Login() {
   const [type, setType] = useState("beatmaker");
   const [avatar, setAvatar] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -36,7 +37,7 @@ export default function Login() {
         password,
         telephone,
         type,
-        avatar: avatar || "https://t4.ftcdn.net/jpg/03/49/49/79/360_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.webp", // Avatar par défaut si vide
+        avatar: avatar || "https://t4.ftcdn.net/jpg/03/49/49/79/360_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.webp",
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
@@ -48,32 +49,75 @@ export default function Login() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Compte créé avec succès :", data);
-
-        localStorage.setItem("user", JSON.stringify(data));
-        router.push("/");
+        setSuccess("Compte créé avec succès ! Vous allez être redirigé vers la page d'accueil.");
+        setError(null);
+        setTimeout(() => {
+          router.push("/");
+        }, 5000); // Redirection après 3 secondes
       } else {
         const errorData = await response.json();
-        console.error("Erreur lors de la création du compte :", errorData.message || "Échec.");
-        setError(errorData.message || "Une erreur s'est produite.");
+        setError("Un compte avec cet email existe déjà.");
+        setSuccess(null);
       }
     } catch (err) {
-      console.error("Erreur lors de la requête :", err);
       setError("Une erreur s'est produite lors de la requête.");
+      setSuccess(null);
     }
+  };
+
+  const closeModal = () => {
+    setError(null);
+    setSuccess(null);
   };
 
   return (
     <>
+      {/* Modal de succès */}
+      {success && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold text-green-600">Succès</h2>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="mt-4 text-gray-700">{success}</p>
+            <div className="mt-6 flex justify-end">
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'erreur */}
+      {error && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold text-red-600">Erreur</h2>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="mt-4 text-gray-700">{error}</p>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Formulaire */}
       <div className="hidden lg:flex lg:flex-1 pl-10 pt-4 bg-white">
         <a href="/" className="text-sm font-semibold text-gray-900">
-          <span aria-hidden="true" className="text-2xl">
-            &larr;
-          </span>
+          <span aria-hidden="true" className="text-2xl">&larr;</span>
         </a>
       </div>
-
       <div className="flex min-h-full bg-white flex-1 flex-col justify-center py-2 sm:px-6 lg:px-2">
         <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
           <img alt="Your Company" src="/Beatdrivelogo.ico" className="mx-auto w-auto" />
