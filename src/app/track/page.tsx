@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faVolumeUp, faTimes, faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 
 interface Track {
+  date: number;
   id_track: number;
   titre: string;
   cover: string;
@@ -133,7 +134,7 @@ export default function TrackPage() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/licence_track`);
         const data: LicenceTrack[] = await response.json();
-
+        
         const priceMapping: { [id_track: number]: string } = {};
         data.forEach((licence) => {
           if (licence.type === "Non-exclusive") {
@@ -188,19 +189,31 @@ export default function TrackPage() {
     const isTrackInCart = existingCart.some((item: { id_track: number }) => item.id_track === track.id_track);
 
     if (isTrackInCart) {
-      setNotification(`"${track.titre}" est déjà dans votre panier.`);
-      setTimeout(() => setNotification(null), 3000);
+        setNotification(`"${track.titre}" est déjà dans votre panier.`);
+        setTimeout(() => setNotification(null), 3000);
     } else {
-      const trackPrice = prices[track.id_track] || "0.00";
-      const updatedCart = [...existingCart, { ...track, price: trackPrice }];
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
-      setTimeout(() => {
-        setNotification(null);
-        window.location.reload();
-      }, 3000);
+        const trackPrice = prices[track.id_track] ;
+
+        // Construire l'objet au format requis
+        const cartItem = {
+            id_track: track.id_track,
+            titre: track.titre,
+            date: track.date,
+            cover: track.cover,
+            price: trackPrice, // Ajout du prix
+        };
+
+        const updatedCart = [...existingCart, cartItem];
+
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+        setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
+        setTimeout(() => {
+            setNotification(null);
+            window.location.reload();
+        }, 3000);
     }
-  };
+};
+
 
   return (
     <>

@@ -42,6 +42,7 @@ interface CartItem {
   titre: string;
   cover: string;
   price: string;
+  licence: string;
 }
 
 export default function Header() {
@@ -149,7 +150,7 @@ export default function Header() {
                       />
                       <div className="ml-4 flex-auto">
                         <h3 className="font-medium text-gray-900">{item.titre}</h3>
-                        <p className="text-sm text-gray-500">{item.price} €</p>
+                        <p className="text-sm text-gray-500">{item.price} € {item.licence}</p>
                       </div>
                       <button
                         onClick={() => handleRemoveItem(item.id_track)}

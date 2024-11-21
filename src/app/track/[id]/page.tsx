@@ -36,6 +36,7 @@ export default function TrackIdPage() {
     const { id } = useParams();
     const [track, setTrack] = useState<Track | null>(null);
     const [licenceTrack, setLicenceTrack] = useState<LicenceTrack[]>([]);
+    const [notification, setNotification] = useState<string | null>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -51,7 +52,6 @@ export default function TrackIdPage() {
                 const data: Track = await response.json();
                 setTrack(data);
 
-                // Récupérer les licences après avoir chargé le track
                 const licenceResponse = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/licence_track/${data.id_track}`
                 );
@@ -68,13 +68,61 @@ export default function TrackIdPage() {
         fetchTrackById();
     }, [id]);
 
+    const handleAddLicenceToCart = (licence: LicenceTrack) => {
+        if (!track) return;
+    
+        // Récupération du panier existant depuis le localStorage
+        const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    
+        // Construire l'objet au format requis
+        const newCartItem = {
+            id_track: track.id_track,
+            titre: track.titre,
+            date: track.date,
+            type: track.type,
+            cover: track.cover,
+            price: licence.prix, // Prix de la licence
+            licence: licence.type, // Type de la licence
+            id_licence_track: licence.id_licence_track, // Ajout pour identifier les licences
+        };
+    
+        // Filtrer pour retirer toute licence existante pour le même id_track
+        const updatedCart = existingCart.filter(
+            (item: { id_track: number }) => item.id_track !== track.id_track
+        );
+    
+        // Ajouter l'élément mis à jour
+        updatedCart.push(newCartItem);
+    
+        // Sauvegarder dans le localStorage
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
+    
+        // Notification de succès
+        setNotification(
+            `"${track.titre}" avec la licence "${licence.type}" ajouté au panier pour ${licence.prix}€ (remplacement si déjà existant).`
+        );
+    
+        // Réinitialiser la notification après un délai
+        setTimeout(() => {
+            setNotification(null);
+            window.location.reload();
+        }, 3000);
+    };
+    
+    
+    
+
     return (
         <>
             <Header />
             <div className="max-w-6xl bg-white mx-auto px-6 py-8">
+                {notification && (
+                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg">
+                        {notification}
+                    </div>
+                )}
                 {track ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Left Section */}
                         <div className="col-span-1 flex flex-col items-center">
                             <img
                                 src={track.cover}
@@ -82,11 +130,10 @@ export default function TrackIdPage() {
                                 className="w-full max-w-xs rounded-lg shadow-lg"
                             />
                         </div>
-                        {/* Right Section */}
-                        <div className="pl-20 ">
+                        <div className="pl-20">
                             <h1 className="text-2xl font-bold text-gray-800">{track.titre}</h1>
                             <p className="text-gray-600 mt-2">
-                                <strong>Auteur :</strong> {track.user.nom} {track.user.prenom}
+                                <strong>Auteur :</strong> {track.user.pseudo}
                             </p>
                             <p className="text-gray-600 mt-2">
                                 <strong>Description :</strong> {track.description}
@@ -127,7 +174,8 @@ export default function TrackIdPage() {
                             {licenceTrack.map((licence) => (
                                 <button
                                     key={licence.id_licence_track}
-                                    className="p-4 border border-gray-300 rounded-lg  text-center text-black text-lg font-medium hover:bg-gray-100"
+                                    onClick={() => handleAddLicenceToCart(licence)}
+                                    className="p-4 border border-gray-300 rounded-lg text-center text-black text-lg font-medium hover:bg-gray-100"
                                 >
                                     {licence.type} <br />{licence.prix} €
                                 </button>
