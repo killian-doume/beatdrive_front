@@ -71,10 +71,8 @@ export default function TrackIdPage() {
     const handleAddLicenceToCart = (licence: LicenceTrack) => {
         if (!track) return;
     
-        // Récupération du panier existant depuis le localStorage
         const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
     
-        // Construire l'objet au format requis
         const newCartItem = {
             id_track: track.id_track,
             titre: track.titre,
@@ -98,9 +96,7 @@ export default function TrackIdPage() {
         localStorage.setItem("cart", JSON.stringify(updatedCart));
     
         // Notification de succès
-        setNotification(
-            `"${track.titre}" avec la licence "${licence.type}" ajouté au panier pour ${licence.prix}€ (remplacement si déjà existant).`
-        );
+        setNotification(`"${track.titre}" ajouté au panier pour ${licence.prix}€ et de licence "${licence.type}".`);
     
         // Réinitialiser la notification après un délai
         setTimeout(() => {
