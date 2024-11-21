@@ -2,16 +2,19 @@
 import Header from '@/components/header';
 import { CheckIcon } from '@heroicons/react/20/solid';
 import { useEffect, useState } from 'react';
+
 interface CartItem {
   id_track: number;
   titre: string;
   cover: string;
   price: string;
-  bpm:string;
+  bpm: string;
   date: string;
 }
+
 export default function Example() {
   const [products, setProducts] = useState<CartItem[]>([]);
+
   useEffect(() => {
     const cart = localStorage.getItem('cart');
     if (cart) {
@@ -24,10 +27,24 @@ export default function Example() {
     }
   }, []);
 
+  const handleRemoveItem = (id: number) => {
+    // Supprime l'élément côté frontend
+    const updatedProducts = products.filter((product) => product.id_track !== id);
+    setProducts(updatedProducts);
+
+    // Supprime l'élément du localStorage
+    localStorage.setItem('cart', JSON.stringify(updatedProducts));
+  };
+
+  // Calcul du prix total
+  const calculateTotalPrice = () => {
+    return products.reduce((total, product) => total + parseFloat(product.price), 0).toFixed(2);
+  };
+
   return (
     <div className="bg-white">
-    <Header/>
-      <div className="mx-auto max-w-2xl px-4  sm:px-6 sm:py-14 lg:px-0">
+      <Header />
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 sm:py-14 lg:px-0">
         <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           Votre panier
         </h1>
@@ -62,7 +79,6 @@ export default function Example() {
                             {product.price} €
                           </p>
                         </div>
-                       
                       </div>
 
                       <div className="mt-4 flex flex-1 items-end justify-between">
@@ -74,6 +90,7 @@ export default function Example() {
                           <button
                             type="button"
                             className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                            onClick={() => handleRemoveItem(product.id_track)}
                           >
                             <span>Supprimer</span>
                           </button>
@@ -88,7 +105,6 @@ export default function Example() {
             </ul>
           </section>
 
-          {/* Order summary */}
           <section aria-labelledby="summary-heading" className="mt-10">
             <h2 id="summary-heading" className="sr-only">
               Order summary
@@ -97,9 +113,16 @@ export default function Example() {
             <div>
               <dl className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <dt className="text-base font-medium text-gray-900">Sous-total</dt>
+                  <dt className="text-base font-medium text-gray-900">Produit-total</dt>
                   <dd className="ml-4 text-base font-medium text-gray-900">
                     {products.length} tracks
+                  </dd>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <dt className="text-base font-medium text-gray-900">Prix-total</dt>
+                  <dd className="ml-4 text-base font-medium text-gray-900">
+                    {calculateTotalPrice()} €
                   </dd>
                 </div>
               </dl>
