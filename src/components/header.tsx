@@ -14,20 +14,16 @@ import {
   PopoverButton,
   PopoverPanel,
 } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ShoppingBagIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface User {
-  accountNonExpired: boolean;
-  accountNonLocked: boolean;
+ 
   adresse_facturation: string | null;
   adresse_livraison: string | null;
-  authorities: { authority: string }[];
   avatar: string | null;
-  credentialsNonExpired: boolean;
   email: string;
-  enabled: boolean;
   id_user: number;
   nom: string;
   prenom: string;
@@ -56,7 +52,7 @@ export default function Header() {
     if (storedUser) {
       try {
         const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser);
+        setUser(parsedUser); // user sera mis à jour ici
         setIsAuthenticated(true);
       } catch {
         setIsAuthenticated(false);
@@ -73,6 +69,14 @@ export default function Header() {
       }
     }
   }, []);
+
+  // Ajoutez un autre useEffect pour surveiller les changements de `user`
+  useEffect(() => {
+    if (user) {
+      console.log("Type d'utilisateur :", user.type);
+    }
+  }, [user]);
+
 
   const handleSignOut = () => {
     localStorage.removeItem('user');
@@ -193,8 +197,20 @@ export default function Header() {
                 className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 z-50"
               >
                 <MenuItem>
-                  <div className="block px-4 py-2 text-sm text-center font-bold text-gray-700">
-                    {user?.pseudo}
+                  <div className="block px-4 py-2 text-sm text-center font-bold">
+                    <span className={user?.type === "admin" ? "text-yellow-500" : "text-gray-700"}>
+                      {user?.pseudo}
+                    </span>
+                    {user?.type === "admin" && (
+                      <img
+                        src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
+                        alt="Crown Icon"
+                        className="ml-2 h-4 w-4 inline"
+                      />
+                    )}
+                    {user?.type === "beatmaker" && (
+                      <MusicalNoteIcon className="ml-2 h-4 w-4 text-blue-500 inline" />
+                    )}
                   </div>
 
                 </MenuItem>
@@ -322,7 +338,26 @@ export default function Header() {
                       src={user?.avatar || 'https://via.placeholder.com/150'}
                       className="h-16 w-16 rounded-full"
                     />
-                    <div className="text-sm font-bold text-gray-700">{user?.pseudo}</div>
+
+
+                    <div className="flex items-center text-sm font-bold">
+                      <span className={user?.type === "admin" ? "text-yellow-500" : "text-gray-700"}>
+                        {user?.pseudo}
+                      </span>
+                      {user?.type === "admin" && (
+                        <img
+                          src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
+                          alt="Crown Icon"
+                          className="ml-2 h-4 w-4"
+                        />
+                      )}
+                      {user?.type === "beatmaker" && (
+                        <MusicalNoteIcon className="ml-2 h-4 w-4 text-blue-500" />
+                      )}
+                    </div>
+
+
+
                     <Link
                       href="/mon_compte"
                       className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"

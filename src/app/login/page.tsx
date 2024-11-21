@@ -25,13 +25,29 @@ export default function Login() {
       if (response.ok) {
         const data = await response.json();
         console.log("Connexion réussie :", data);
-
-        // Stocker les données utilisateur dans le Local Storage
-        localStorage.setItem("user", JSON.stringify(data));
-
+    
+        // Filtrer les données nécessaires
+        const filteredData = {
+            adresse_facturation: data.adresse_facturation || null,
+            adresse_livraison: data.adresse_livraison || null,
+            avatar: data.avatar,
+            email: data.email,
+            id_user: data.id_user,
+            nom: data.nom,
+            prenom: data.prenom,
+            pseudo: data.pseudo,
+            telephone: data.telephone,
+            type: data.type,
+            username: data.username,
+        };
+    
+        // Stocker les données utilisateur filtrées dans le Local Storage
+        localStorage.setItem("user", JSON.stringify(filteredData));
+    
         // Rediriger vers la page d'accueil
         router.push("/");
-      } else {
+    }
+     else {
         const errorData = await response.json();
         console.log("Erreur lors de la connexion :", errorData.message || "Échec de la connexion.");
       }

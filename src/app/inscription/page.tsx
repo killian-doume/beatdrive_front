@@ -3,7 +3,7 @@ import { ArrowUpTrayIcon, CheckIcon, XMarkIcon } from "@heroicons/react/20/solid
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function Login() {
+export default function Register() {
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [pseudo, setPseudo] = useState("");

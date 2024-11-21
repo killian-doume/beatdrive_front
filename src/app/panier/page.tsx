@@ -12,7 +12,7 @@ interface CartItem {
   date: string;
 }
 
-export default function Example() {
+export default function Panier() {
   const [products, setProducts] = useState<CartItem[]>([]);
 
   useEffect(() => {
