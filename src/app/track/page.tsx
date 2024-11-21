@@ -85,7 +85,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
 export default function TrackPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [filteredTracks, setFilteredTracks] = useState<Track[]>([]);
-  const [visibleTracks, setVisibleTracks] = useState<Track[]>([]); // Tracks affichés
+  const [visibleTracks, setVisibleTracks] = useState<Track[]>([]);
   const [prices, setPrices] = useState<{ [id_track: number]: string }>({});
   const [notification, setNotification] = useState<string | null>(null);
   const [filters, setFilters] = useState({ type: "", genre: "", cle: "" });
@@ -103,7 +103,6 @@ export default function TrackPage() {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
 
-        // Trier les tracks par date (du plus récent au plus ancien)
         const sortedTracks = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setTracks(sortedTracks);
 
@@ -113,7 +112,7 @@ export default function TrackPage() {
           : sortedTracks;
 
         setFilteredTracks(filtered);
-        setVisibleTracks(filtered.slice(0, 6)); // Afficher les 6 premiers morceaux
+        setVisibleTracks(filtered.slice(0, 6));
 
         const types = Array.from(new Set(data.map((track) => track.type))).sort();
         const genres = Array.from(new Set(data.map((track) => track.genre))).sort();
@@ -123,7 +122,6 @@ export default function TrackPage() {
         setUniqueGenres(genres);
         setUniqueKeys(keys);
 
-        // Appliquer le filtre initial si présent dans l'URL
         setFilters((prevFilters) => ({ ...prevFilters, genre: genreQuery }));
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
@@ -134,7 +132,6 @@ export default function TrackPage() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/licence_track`);
         const data: LicenceTrack[] = await response.json();
-        
         const priceMapping: { [id_track: number]: string } = {};
         data.forEach((licence) => {
           if (licence.type === "Non-exclusive") {
@@ -166,7 +163,7 @@ export default function TrackPage() {
     });
 
     setFilteredTracks(filtered);
-    setVisibleTracks(filtered.slice(0, 6)); // Réinitialiser l'affichage à 6 morceaux
+    setVisibleTracks(filtered.slice(0, 6));
   };
 
   const handleShowMore = () => {
@@ -183,36 +180,57 @@ export default function TrackPage() {
     }
   };
 
-  const handleAddToCart = (track: Track) => {
+  const handleAddToCart = (track: Track, licenceType: string, licenceId: number) => {
+    // Récupérer le panier actuel depuis le localStorage
     const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
 
-    const isTrackInCart = existingCart.some((item: { id_track: number }) => item.id_track === track.id_track);
+    // Vérifier si un élément avec le même id_track et licenceType existe déjà
+    const isAlreadyInCart = existingCart.some(
+        (item: { id_track: number; licence: string }) =>
+            item.id_track === track.id_track && item.licence === licenceType
+    );
 
-    if (isTrackInCart) {
-        setNotification(`"${track.titre}" est déjà dans votre panier.`);
-        setTimeout(() => setNotification(null), 3000);
-    } else {
-        const trackPrice = prices[track.id_track] ;
-
-        // Construire l'objet au format requis
-        const cartItem = {
-            id_track: track.id_track,
-            titre: track.titre,
-            date: track.date,
-            cover: track.cover,
-            price: trackPrice, // Ajout du prix
-        };
-
-        const updatedCart = [...existingCart, cartItem];
-
-        localStorage.setItem("cart", JSON.stringify(updatedCart));
-        setNotification(`"${track.titre}" ajouté au panier pour ${trackPrice}€.`);
+    if (isAlreadyInCart) {
+        // Si l'élément existe déjà, afficher un message d'erreur
+        setNotification(
+            `"${track.titre}" avec la licence "${licenceType}" est déjà dans votre panier.`
+        );
         setTimeout(() => {
             setNotification(null);
-            window.location.reload();
+            window.location.reload(); // Recharger la page après l'erreur
         }, 3000);
+        return; // Ne pas ajouter l'élément
     }
+
+    // Créer un nouvel objet représentant l'élément à ajouter
+    const cartItem = {
+        id_track: track.id_track,
+        titre: track.titre,
+        date: track.date,
+        cover: track.cover,
+        price: prices[track.id_track] || "0.00", // Prix associé au track
+        licence: licenceType, // Type de licence (ex : "Non-exclusive")
+        id_licence_track: licenceId, // ID unique de la licence
+    };
+
+    // Ajouter le nouvel élément au panier
+    const updatedCart = [...existingCart, cartItem];
+
+    // Mettre à jour le localStorage avec le panier mis à jour
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+    // Notification pour l'utilisateur
+    setNotification(
+        `"${track.titre}" avec la licence "${licenceType}" a été ajouté au panier.`
+    );
+
+    // Supprimer la notification et recharger la page après le succès
+    setTimeout(() => {
+        setNotification(null);
+        window.location.reload(); // Recharger la page après le succès
+    }, 3000);
 };
+
 
 
   return (
@@ -297,7 +315,7 @@ export default function TrackPage() {
                 </a>
                 <p className="text-gray-400 mb-4">By : {track.user.pseudo}</p>
                 <button
-                  onClick={() => handleAddToCart(track)}
+                  onClick={() => handleAddToCart(track, "Non-exclusive", 1)}
                   className="bg-indigo-600 text-white w-full px-6 py-2 rounded-md hover:bg-indigo-500 flex items-center justify-center gap-2"
                 >
                   <FontAwesomeIcon icon={faShoppingCart} />
