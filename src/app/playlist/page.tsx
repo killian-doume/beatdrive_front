@@ -2,6 +2,7 @@
 
 import Header from '@/components/header'
 import { useState, useEffect } from 'react'
+import { PencilSquareIcon, CheckIcon } from '@heroicons/react/24/solid'
 
 interface User {
   nom: string
@@ -17,7 +18,23 @@ interface User {
   id_user: number
 }
 
-export default function MonCompte() {
+interface Track {
+  id_track: number
+  titre: string
+  author: string
+  cover: string
+  price: string
+  bpm: string
+  cle: string
+  date: string
+  description: string
+  genre: string
+  statut: string
+  type: string
+  audio: string
+}
+
+export default function Playlist() {
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true)
   const [user, setUser] = useState<User>({
     nom: '',
@@ -32,8 +49,11 @@ export default function MonCompte() {
     type: '',
     id_user: 0,
   })
-
-  const [activeSection, setActiveSection] = useState<'account' | 'password' | 'delete'>('account')
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [editableTrackId, setEditableTrackId] = useState<number | null>(null)
+  const [editableTrack, setEditableTrack] = useState<Partial<Track>>({})
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string>('')
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
@@ -52,302 +72,169 @@ export default function MonCompte() {
         type: parsedUser.type || '',
         id_user: parsedUser.id_user || 0,
       })
+      fetchTracks(parsedUser.id_user)
     } else {
       setIsAuthorized(false)
     }
   }, [])
 
-  const handleInputChange = (field: keyof User, value: string) => {
-    setUser({ ...user, [field]: value })
-  }
-
-  const handleAvatarChange = () => {
-    const newAvatar = prompt('Entrez l’URL de votre nouvel avatar :')
-    if (newAvatar) {
-      setUser({ ...user, avatar: newAvatar })
-    }
-  }
-
-  const handleSaveChanges = async (event: React.FormEvent) => {
-    event.preventDefault(); // Empêche la soumission par défaut du formulaire
-  
+  const fetchTracks = async (id_user: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user.id_user}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", 
-        body: JSON.stringify({
-          nom: user.nom,
-          prenom: user.prenom,
-          email: user.email,
-          telephone: user.telephone,
-          pseudo: user.pseudo,
-          adresse_facturation: user.adresse_facturation || null,
-          adresse_livraison: user.adresse_livraison || null,
-          type: user.type,
-        }),
-      });
-  
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("Erreur backend :", error);
-        throw new Error("Erreur lors de la mise à jour du compte");
-      }
-  
-      const updatedUser = await response.json();
-      console.log("Mise à jour réussie :", updatedUser);
-  
-      // Met à jour l'état local avec les nouvelles données
-      setUser({
-        ...user,
-        nom: updatedUser.nom,
-        prenom: updatedUser.prenom,
-        email: updatedUser.email,
-        telephone: updatedUser.telephone,
-        pseudo: updatedUser.pseudo,
-        adresse_facturation: updatedUser.adresse_facturation,
-        adresse_livraison: updatedUser.adresse_livraison,
-        type: updatedUser.type,
-      });
-  
-      alert("Modifications enregistrées avec succès !");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/all/${id_user}`)
+      const data = await response.json()
+      console.log('Tracks fetched:', data)
+      setTracks(data)
     } catch (error) {
-      console.error(error);
-      alert("Une erreur est survenue lors de la mise à jour.");
+      console.error('Error fetching tracks:', error)
     }
-  };
-  
-
-
-  if (!isAuthorized) {
-    // Page d'erreur si l'utilisateur n'est pas connecté
-    return (
-      <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
-        <div className="text-center">
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
-            Accès interdit
-          </h1>
-          <p className="mt-6 text-lg font-medium text-gray-500">
-            Vous devez être connecté pour accéder à cette page.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <a
-              href="/login"
-              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Aller à la page de connexion
-            </a>
-            <a href="/" className="text-sm font-semibold text-gray-900">
-              Retourner à l'accueil <span aria-hidden="true">&rarr;</span>
-            </a>
-          </div>
-        </div>
-      </main>
-    )
   }
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setAudioFile(file)
+
+      // Option 1: Generate temporary URL
+      const temporaryUrl = URL.createObjectURL(file)
+      setAudioUrl(temporaryUrl)
+      console.log('Temporary audio URL:', temporaryUrl)
+
+      // Option 2: Upload file to server or cloud storage
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/audio`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setAudioUrl(data.url) // Use the URL from server
+          console.log('Uploaded audio URL:', data.url)
+        } else {
+          console.error('Failed to upload audio file')
+        }
+      } catch (error) {
+        console.error('Error uploading audio file:', error)
+      }
+    }
+  }
+
+  const handleEdit = (track: Track) => {
+    setEditableTrackId(track.id_track)
+    setEditableTrack({ ...track })
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditableTrack({
+      ...editableTrack,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const handleSave = async (id_track: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/${id_track}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editableTrack),
+      })
+      if (response.ok) {
+        const updatedTrack = await response.json()
+        setTracks((prevTracks) =>
+          prevTracks.map((track) =>
+            track.id_track === id_track ? updatedTrack : track
+          )
+        )
+        console.log('Track updated:', updatedTrack)
+        setEditableTrackId(null)
+      } else {
+        console.error('Failed to update track')
+      }
+    } catch (error) {
+      console.error('Error updating track:', error)
+    }
+  }
+
   return (
     <>
       <Header />
-      <div className="text-black bg-gray-100 min-h-screen">
-        <div className="max-w-4xl mx-auto py-10 px-6">
-          <h1 className="text-2xl font-semibold mb-8">Paramètres du compte</h1>
-
-          {/* Menu */}
-          <div className="flex gap-4 mb-8">
-            <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'account'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('account')}
+      <div className="flex flex-col items-center p-6">
+        <h1 className="text-2xl font-bold mb-6">Playlist</h1>
+        <div className="mb-6">
+          <label className="block text-sm font-bold mb-2">Upload Audio:</label>
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={handleAudioUpload}
+            className="border rounded p-2"
+          />
+          {audioUrl && (
+            <p className="text-sm text-green-500 mt-2">Audio URL: {audioUrl}</p>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tracks.map((track) => (
+            <div
+              key={track.id_track}
+              className="flex flex-col border p-4 rounded-md shadow-md"
             >
-              Compte
-            </button>
-            <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'password'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('password')}
-            >
-              Mot de passe
-            </button>
-            <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'delete'
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('delete')}
-            >
-              Supprimer compte
-            </button>
-          </div>
-
-          {/* Formulaire dynamique */}
-          {activeSection === 'account' && (
-            <form className="space-y-6">
-              {/* Avatar */}
-              <div className="mb-6 flex items-center gap-6">
-                <img
-                  src={user.avatar || 'https://via.placeholder.com/100'}
-                  alt="Avatar"
-                  className="h-24 w-24 rounded-full bg-gray-300 object-cover"
-                />
-                <div>
+              <img
+                src={track.cover}
+                alt={track.titre}
+                className="w-full h-64 object-cover rounded-md mb-4"
+              />
+              {editableTrackId === track.id_track ? (
+                <>
+                  {Object.keys(track)
+                    .filter((key) => key !== 'user' && key !== 'id_track') // Exclure 'user' et 'id_track'
+                    .map((key) => (
+                      <div key={key} className="mb-2">
+                        <label className="block text-sm font-bold text-black">
+                          {key}:
+                        </label>
+                        <input
+                          type="text"
+                          name={key}
+                          value={(editableTrack as any)[key] || ''}
+                          onChange={handleInputChange}
+                          className="border rounded p-2 text-black w-full"
+                        />
+                      </div>
+                    ))}
                   <button
-                    type="button"
-                    onClick={handleAvatarChange}
-                    className="rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-black hover:bg-gray-300"
+                    className="mt-4 bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center"
+                    onClick={() => handleSave(track.id_track)}
                   >
-                    Changer d'avatar
+                    <CheckIcon className="w-5 h-5 mr-2" /> Valider
                   </button>
-                </div>
-              </div>
-
-              {/* Informations utilisateur */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium">Nom</label>
-                  <input
-                    type="text"
-                    value={user.nom}
-                    onChange={(e) => handleInputChange('nom', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Prénom</label>
-                  <input
-                    type="text"
-                    value={user.prenom}
-                    onChange={(e) => handleInputChange('prenom', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Email</label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Téléphone</label>
-                  <input
-                    type="text"
-                    value={user.telephone}
-                    onChange={(e) => handleInputChange('telephone', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Pseudo</label>
-                  <input
-                    type="text"
-                    value={user.pseudo}
-                    onChange={(e) => handleInputChange('pseudo', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Adresse de facturation</label>
-                  <input
-                    type="text"
-                    value={user.adresse_facturation || ''}
-                    onChange={(e) =>
-                      handleInputChange('adresse_facturation', e.target.value)
-                    }
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Adresse de livraison</label>
-                  <input
-                    type="text"
-                    value={user.adresse_livraison || ''}
-                    onChange={(e) =>
-                      handleInputChange('adresse_livraison', e.target.value)
-                    }
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  {/* Vérifier si user.type n'est pas "admin" */}
-                  {user.type !== 'admin' && (
-                    <div>
-                      <label className="block text-sm font-medium">Type d'utilisateur</label>
-                      <select
-                        value={user.type}
-                        onChange={(e) => handleInputChange('type', e.target.value)}
-                        className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      >
-                        <option value="Beatmaker">Beatmaker</option>
-                        <option value="Client">Client</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-              <button
-                type="submit"
-                onClick={handleSaveChanges}
-                className="mt-6 w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600"
-              >
-                Enregistrer les modifications
-              </button>
-
-            </form>
-          )}
-
-          {activeSection === 'password' && (
-            <form className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium">Mot de passe actuel</label>
-                <input
-                  type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Nouveau mot de passe</label>
-                <input
-                  type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Confirmer le mot de passe</label>
-                <input
-                  type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <button
-                type="submit"
-                className="mt-6 w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600"
-              >
-                Mettre à jour le mot de passe
-              </button>
-            </form>
-          )}
-
-          {activeSection === 'delete' && (
-            <div className="space-y-6">
-              <p className="text-red-600 font-medium">
-                Attention : La suppression de votre compte est irréversible.
-              </p>
-              <button
-                className="w-full rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
-              >
-                Supprimer mon compte
-              </button>
+                </>
+              ) : (
+                <>
+                  {Object.entries(track)
+                    .filter(([key]) => key !== 'user' && key !== 'id_track') // Exclure 'user' et 'id_track'
+                    .map(([key, value]) => (
+                      <p key={key} className="text-sm text-black">
+                        <strong>{key}:</strong>{' '}
+                        {typeof value === 'object' && value !== null
+                          ? JSON.stringify(value)
+                          : value}
+                      </p>
+                    ))}
+                  <button
+                    className="mt-4 bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center"
+                    onClick={() => handleEdit(track)}
+                  >
+                    <PencilSquareIcon className="w-5 h-5 mr-2" /> Modifier
+                  </button>
+                </>
+              )}
             </div>
-          )}
+          ))}
         </div>
       </div>
     </>

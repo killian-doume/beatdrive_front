@@ -232,6 +232,16 @@ export default function Header() {
                     </Link>
                   </MenuItem>
                 )}
+                {user?.type === "Beatmaker" && (
+                  <MenuItem>
+                    <Link
+                      href="/upload"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Upload
+                    </Link>
+                  </MenuItem>
+                )}
 
                 <MenuItem>
                   <button
