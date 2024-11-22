@@ -19,7 +19,7 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface User {
- 
+
   adresse_facturation: string | null;
   adresse_livraison: string | null;
   avatar: string | null;
@@ -70,20 +70,20 @@ export default function Header() {
     }
   }, []);
 
-  // Ajoutez un autre useEffect pour surveiller les changements de `user`
-  useEffect(() => {
-    if (user) {
-      console.log("Type d'utilisateur :", user.type);
-    }
-  }, [user]);
+
 
 
   const handleSignOut = () => {
+    // Supprime l'utilisateur de localStorage
     localStorage.removeItem('user');
+    // Réinitialise l'état de l'authentification
     setIsAuthenticated(false);
     setUser(null);
-    window.location.reload();
+
+    // Redirige vers la page d'accueil
+    window.location.assign('/');
   };
+
 
   const handleRemoveItem = (id: number) => {
     const updatedCart = cartItems.filter((item) => item.id_track !== id);
@@ -222,6 +222,17 @@ export default function Header() {
                     Mon compte
                   </Link>
                 </MenuItem>
+                {user?.type === "Beatmaker" && (
+                  <MenuItem>
+                    <Link
+                      href="/playlist"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Playlist
+                    </Link>
+                  </MenuItem>
+                )}
+
                 <MenuItem>
                   <button
                     onClick={handleSignOut}
@@ -388,3 +399,7 @@ export default function Header() {
     </header>
   );
 }
+function usecookie(arg0: string | null) {
+  throw new Error('Function not implemented.');
+}
+
