@@ -89,6 +89,11 @@ export default function UploadTrack() {
     }
   };
 
+
+  function handleAudioChange(event: ChangeEvent<HTMLInputElement>): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <>
       <Header />
@@ -220,7 +225,7 @@ export default function UploadTrack() {
           <div className="space-y-6">
             {/* Cover Upload */}
             <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
-              <label className="block text-black font-medium mb-2">Cover (Image):</label>
+              <label className="block text-black font-medium mb-2">Cover (jpg):</label>
               <input
                 type="file"
                 accept="image/*"
@@ -241,16 +246,26 @@ export default function UploadTrack() {
             </div>
 
             {/* Audio Upload */}
-            <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
-              <label className="block text-black font-medium mb-2">Audio (URL):</label>
+           {/* Cover Upload */}
+           <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
+              <label className="block text-black font-medium mb-2">Audio (mp3)</label>
               <input
-                type="text"
-                value={audio}
-                onChange={(e) => setAudio(e.target.value)}
-                placeholder="Entrez l'URL de l'audio"
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioChange}
+                className="w-full text-sm"
                 required
               />
+              {previewCover && (
+                <div className="mt-4">
+                 
+                  <img
+                    src={previewCover}
+                    alt="Preview"
+                    className="mt-2 max-w-full h-auto rounded"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Bouton Envoyer */}
