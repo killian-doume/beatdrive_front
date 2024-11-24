@@ -86,7 +86,6 @@ export default function Page() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
-        console.log(data);
         const latestCovers = data.slice(-3).map((track) => ({
           link: track.link, // Correct: utiliser 'link' pour correspondre à l'interface 'Track'
           audio: track.audio,

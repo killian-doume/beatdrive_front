@@ -233,9 +233,9 @@ export default function MonCompte() {
         <div className="max-w-4xl mx-auto py-10 px-6">
           <h1 className="text-2xl font-semibold mb-8">Paramètres du compte</h1>
 
-          <div className="flex gap-4 mb-8">
+          <div className="flex justify-between gap-2 mb-8">
             <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'commande'
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'commande'
                 ? 'bg-indigo-500 text-white'
                 : 'bg-gray-200 text-black hover:bg-gray-300'
                 }`}
@@ -244,7 +244,7 @@ export default function MonCompte() {
               Historique de commande
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'account'
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'account'
                 ? 'bg-indigo-500 text-white'
                 : 'bg-gray-200 text-black hover:bg-gray-300'
                 }`}
@@ -253,7 +253,7 @@ export default function MonCompte() {
               Compte
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'password'
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'password'
                 ? 'bg-indigo-500 text-white'
                 : 'bg-gray-200 text-black hover:bg-gray-300'
                 }`}
@@ -262,7 +262,7 @@ export default function MonCompte() {
               Mot de passe
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${activeSection === 'delete'
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'delete'
                 ? 'bg-red-500 text-white'
                 : 'bg-gray-200 text-black hover:bg-gray-300'
                 }`}
@@ -271,6 +271,7 @@ export default function MonCompte() {
               Supprimer compte
             </button>
           </div>
+
           {activeSection === 'commande' && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Historique des commandes</h2>

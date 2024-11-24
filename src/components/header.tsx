@@ -52,10 +52,8 @@ export default function Header() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/all/${userId}`);
       if (response.ok) {
-        console.log('Playlist trouvée pour l\'utilisateur.');
         setShowPlaylistButton(true);
       } else if (response.status === 404) {
-        console.warn('Playlist non trouvée pour l\'utilisateur.');
         setShowPlaylistButton(false);
       } else {
         console.error('Erreur inattendue lors de la vérification de la playlist:', response.status);
