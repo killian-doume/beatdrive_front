@@ -50,6 +50,7 @@ export default function Register() {
 
       if (response.ok) {
         setSuccess("Compte créé avec succès ! Vous allez être redirigé vers la page d'accueil.");
+        console.log(response);
         setError(null);
         setTimeout(() => {
           router.push("/");
@@ -247,8 +248,8 @@ export default function Register() {
                     onChange={(e) => setType(e.target.value)}
                     className="block w-full rounded-md border-0 py-1.5 pl-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
                   >
-                    <option value="beatmaker">Beatmaker</option>
-                    <option value="client">Client</option>
+                    <option value="Beatmaker">Beatmaker</option>
+                    <option value="Client">Client</option>
                   </select>
                 </div>
               </div>

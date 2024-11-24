@@ -11,7 +11,7 @@ import Tendance_track from '@/components/tendance_track';
 import GenreTrack from '@/components/genre_track';
 
 interface Track {
-  cover: string;
+  link: string;
   audio: string;
   title: string;
   artist: string;
@@ -39,7 +39,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
     <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-2 flex items-center justify-between shadow-lg">
       {/* Left: Track Cover, Shopping Bag Icon, and Info */}
       <div className="flex items-center">
-        <img src={track.cover} alt="Track cover" className="w-10 h-10 rounded-md" />
+        <img src={track.link} alt="Track cover" className="w-10 h-10 rounded-md" />
         <button className="p-2 focus:outline-none" onClick={() => alert('Ajouter au panier')}>
           <ShoppingBagIcon className="w-6 h-6 text-white" />
         </button>
@@ -86,13 +86,15 @@ export default function Page() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
+        console.log(data);
         const latestCovers = data.slice(-3).map((track) => ({
-          cover: track.cover,
+          link: track.link, // Correct: utiliser 'link' pour correspondre à l'interface 'Track'
           audio: track.audio,
           title: track.title,
           artist: track.artist,
         }));
         setCovers(latestCovers);
+        
       } catch (error) {
         console.error('Erreur lors de la récupération des pistes:', error);
       }
@@ -144,7 +146,7 @@ export default function Page() {
               <div className="carousel">
                 <div className="relative">
                   <img
-                    src={covers[currentCoverIndex].cover}
+                    src={covers[currentCoverIndex].link}
                     alt={`Cover ${currentCoverIndex + 1}`}
                     className="w-full max-w-sm h-auto max-h-72 rounded-md border border-gray-300 shadow-md transition-opacity duration-1000 ease-in-out cursor-pointer object-contain"
                     onClick={() => handlePlayTrack(covers[currentCoverIndex])}

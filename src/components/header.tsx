@@ -19,7 +19,6 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface User {
-
   adresse_facturation: string | null;
   adresse_livraison: string | null;
   avatar: string | null;
@@ -46,14 +45,40 @@ export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [showPlaylistButton, setShowPlaylistButton] = useState(true);
+
+  // Fonction pour vérifier l'existence de la playlist
+  const fetchPlaylistStatus = async (userId: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/all/${userId}`);
+      if (response.ok) {
+        console.log('Playlist trouvée pour l\'utilisateur.');
+        setShowPlaylistButton(true);
+      } else if (response.status === 404) {
+        console.warn('Playlist non trouvée pour l\'utilisateur.');
+        setShowPlaylistButton(false);
+      } else {
+        console.error('Erreur inattendue lors de la vérification de la playlist:', response.status);
+        setShowPlaylistButton(false);
+      }
+    } catch (error) {
+      console.error('Erreur réseau ou autre lors de la vérification de la playlist:', error);
+      setShowPlaylistButton(false);
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
         const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser); // user sera mis à jour ici
+        setUser(parsedUser);
         setIsAuthenticated(true);
+
+        // Appel API pour vérifier la playlist
+        if (parsedUser.id_user) {
+          fetchPlaylistStatus(parsedUser.id_user);
+        }
       } catch {
         setIsAuthenticated(false);
       }
@@ -70,25 +95,17 @@ export default function Header() {
     }
   }, []);
 
-
-
-
   const handleSignOut = () => {
-    // Supprime l'utilisateur de localStorage
     localStorage.removeItem('user');
-    // Réinitialise l'état de l'authentification
     setIsAuthenticated(false);
     setUser(null);
-
-    // Redirige vers la page d'accueil
     window.location.assign('/');
   };
-
 
   const handleRemoveItem = (id: number) => {
     const updatedCart = cartItems.filter((item) => item.id_track !== id);
     setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart)); // Met à jour le localStorage
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
   return (
@@ -180,7 +197,6 @@ export default function Header() {
                 </div>
               )}
             </PopoverPanel>
-
           </Popover>
 
           {isAuthenticated ? (
@@ -201,18 +217,7 @@ export default function Header() {
                     <span className={user?.type === "admin" ? "text-yellow-500" : "text-gray-700"}>
                       {user?.pseudo}
                     </span>
-                    {user?.type === "admin" && (
-                      <img
-                        src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
-                        alt="Crown Icon"
-                        className="ml-2 h-4 w-4 inline"
-                      />
-                    )}
-                    {user?.type === "beatmaker" && (
-                      <MusicalNoteIcon className="ml-2 h-4 w-4 text-blue-500 inline" />
-                    )}
                   </div>
-
                 </MenuItem>
                 <MenuItem>
                   <Link
@@ -222,7 +227,7 @@ export default function Header() {
                     Mon compte
                   </Link>
                 </MenuItem>
-                {user?.type === "Beatmaker" && (
+                {user?.type === "beatmaker" && showPlaylistButton && (
                   <MenuItem>
                     <Link
                       href="/playlist"
@@ -232,7 +237,7 @@ export default function Header() {
                     </Link>
                   </MenuItem>
                 )}
-                {user?.type === "Beatmaker" && (
+                {user?.type === "beatmaker" && (
                   <MenuItem>
                     <Link
                       href="/upload"
@@ -242,7 +247,6 @@ export default function Header() {
                     </Link>
                   </MenuItem>
                 )}
-
                 <MenuItem>
                   <button
                     onClick={handleSignOut}
@@ -252,7 +256,6 @@ export default function Header() {
                   </button>
                 </MenuItem>
               </MenuItems>
-
             </Menu>
           ) : (
             <Link href="/login" className="text-sm font-semibold text-gray-900">
@@ -263,153 +266,161 @@ export default function Header() {
       </nav>
 
       {/* Mobile Navigation */}
-      <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
-        <div className="fixed inset-0 z-10" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">Beatdrive</span>
-              <img alt="Beatdrive Logo" src="/Beatdrivelogo.ico" className="h-20 w-auto" />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="-m-2.5 rounded-md p-2.5 text-gray-700"
-            >
-              <span className="sr-only">Close menu</span>
-              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-            </button>
-          </div>
-          <div className="mt-6 flow-root">
-            <div className="-my-6 divide-y divide-gray-500/10">
-              <div className="space-y-2 py-6">
-                <Disclosure as="div" className="-mx-3">
-                  <Disclosure.Button className="group flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold text-gray-900 hover:bg-gray-50">
-                    Menu
-                    <ChevronDownIcon
-                      className="h-5 w-5 text-gray-400 group-hover:text-gray-700"
-                      aria-hidden="true"
-                    />
-                  </Disclosure.Button>
-                  <Disclosure.Panel className="mt-2 space-y-2">
-                    <Link
-                      href="/track"
-                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-                    >
-                      Track
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-                    >
-                      Prix
-                    </Link>
-                    <Link
-                      href="/about"
-                      className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-                    >
-                      A propos
-                    </Link>
-                  </Disclosure.Panel>
-                </Disclosure>
-              </div>
-              <div className="py-6">
-                {cartItems.length > 0 ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900">Votre Panier</h3>
-                    <ul className="space-y-4">
-                      {cartItems.map((item) => (
-                        <li key={item.id_track} className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <img
-                              alt={`Cover de ${item.titre}`}
-                              src={item.cover}
-                              className="h-12 w-12 rounded-md object-cover"
-                            />
-                            <div className="ml-3">
-                              <p className="text-sm font-semibold text-gray-900">{item.titre}</p>
-                              <p className="text-sm text-gray-500">{item.price} €</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveItem(item.id_track)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href="/panier"
-                      className="block rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700"
-                    >
-                      Aller au panier
-                    </Link>
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500">Votre panier est vide.</p>
-                )}
-              </div>
-              <div className="py-6">
-                {isAuthenticated ? (
-                  <div className="flex flex-col items-center space-y-4">
-                    <img
-                      alt="User Avatar"
-                      src={user?.avatar || 'https://via.placeholder.com/150'}
-                      className="h-16 w-16 rounded-full"
-                    />
-
-
-                    <div className="flex items-center text-sm font-bold">
-                      <span className={user?.type === "admin" ? "text-yellow-500" : "text-gray-700"}>
-                        {user?.pseudo}
-                      </span>
-                      {user?.type === "admin" && (
-                        <img
-                          src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
-                          alt="Crown Icon"
-                          className="ml-2 h-4 w-4"
-                        />
-                      )}
-                      {user?.type === "beatmaker" && (
-                        <MusicalNoteIcon className="ml-2 h-4 w-4 text-blue-500" />
-                      )}
+     {/* Mobile Navigation */}
+<Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+  <div className="fixed inset-0 z-10" />
+  <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+    <div className="flex items-center justify-between">
+      <Link href="/" className="-m-1.5 p-1.5">
+        <span className="sr-only">Beatdrive</span>
+        <img alt="Beatdrive Logo" src="/Beatdrivelogo.ico" className="h-20 w-auto" />
+      </Link>
+      <button
+        type="button"
+        onClick={() => setMobileMenuOpen(false)}
+        className="-m-2.5 rounded-md p-2.5 text-gray-700"
+      >
+        <span className="sr-only">Close menu</span>
+        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+      </button>
+    </div>
+    <div className="mt-6 flow-root">
+      <div className="-my-6 divide-y divide-gray-500/10">
+        <div className="space-y-2 py-6">
+          <Disclosure as="div" className="-mx-3">
+            <Disclosure.Button className="group flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold text-gray-900 hover:bg-gray-50">
+              Menu
+              <ChevronDownIcon
+                className="h-5 w-5 text-gray-400 group-hover:text-gray-700"
+                aria-hidden="true"
+              />
+            </Disclosure.Button>
+            <Disclosure.Panel className="mt-2 space-y-2">
+              <Link
+                href="/track"
+                className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              >
+                Track
+              </Link>
+              <Link
+                href="/pricing"
+                className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              >
+                Prix
+              </Link>
+              <Link
+                href="/about"
+                className="block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              >
+                A propos
+              </Link>
+            </Disclosure.Panel>
+          </Disclosure>
+        </div>
+        <div className="py-6">
+          {cartItems.length > 0 ? (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-gray-900">Votre Panier</h3>
+              <ul className="space-y-4">
+                {cartItems.map((item) => (
+                  <li key={item.id_track} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <img
+                        alt={`Cover de ${item.titre}`}
+                        src={item.cover}
+                        className="h-12 w-12 rounded-md object-cover"
+                      />
+                      <div className="ml-3">
+                        <p className="text-sm font-semibold text-gray-900">{item.titre}</p>
+                        <p className="text-sm text-gray-500">{item.price} €</p>
+                      </div>
                     </div>
-
-
-
-                    <Link
-                      href="/mon_compte"
-                      className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
-                    >
-                      Mon compte
-                    </Link>
                     <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left rounded-lg px-4 py-2 text-base text-center font-semibold text-red-500 hover:bg-gray-50"
+                      onClick={() => handleRemoveItem(item.id_track)}
+                      className="text-red-500 hover:text-red-700"
                     >
-                      Déconnexion
+                      <TrashIcon className="h-5 w-5" />
                     </button>
-                  </div>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-gray-50"
-                  >
-                    Connexion
-                  </Link>
-                )}
-              </div>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/panier"
+                className="block rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                Aller au panier
+              </Link>
             </div>
-          </div>
-        </DialogPanel>
-      </Dialog>
+          ) : (
+            <p className="text-center text-gray-500">Votre panier est vide.</p>
+          )}
+        </div>
+        <div className="py-6">
+          {isAuthenticated ? (
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <img
+                  alt="User Avatar"
+                  src={user?.avatar || 'https://via.placeholder.com/150'}
+                  className="h-12 w-12 rounded-full"
+                />
+                <div className="ml-4">
+                  <p className="text-sm font-semibold text-gray-900">{user?.pseudo}</p>
+                  {user?.type === "admin" && (
+                    <img
+                      src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
+                      alt="Crown Icon"
+                      className="h-4 w-4"
+                    />
+                  )}
+                  {user?.type === "beatmaker" && (
+                    <MusicalNoteIcon className="h-4 w-4 text-blue-500" />
+                  )}
+                </div>
+              </div>
+              <Link
+                href="/mon_compte"
+                className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              >
+                Mon compte
+              </Link>
+              {user?.type === "beatmaker" && showPlaylistButton && (
+                <Link
+                  href="/playlist"
+                  className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+                >
+                  Playlist
+                </Link>
+              )}
+              {user?.type === "beatmaker" && (
+                <Link
+                  href="/upload"
+                  className="block rounded-lg px-4 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+                >
+                  Upload
+                </Link>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="block w-full rounded-lg px-4 py-2 text-base font-semibold text-red-500 hover:bg-gray-50"
+              >
+                Déconnexion
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-900 hover:bg-gray-50"
+            >
+              Connexion
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  </DialogPanel>
+</Dialog>
 
     </header>
   );
 }
-function usecookie(arg0: string | null) {
-  throw new Error('Function not implemented.');
-}
-

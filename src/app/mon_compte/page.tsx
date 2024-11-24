@@ -16,9 +16,15 @@ interface User {
   type: string
   id_user: number
 }
-
+interface Commande {
+  date: string;
+  nombre_total: number;
+  prix_total: number;
+}
 export default function MonCompte() {
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true)
+  const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [user, setUser] = useState<User>({
     nom: '',
     prenom: '',
@@ -30,15 +36,23 @@ export default function MonCompte() {
     adresse_livraison: '',
     avatar: null,
     type: '',
-    id_user: 0,
-  })
+    id_user: 0, // Définir à 0 par défaut
+  });
 
-  const [activeSection, setActiveSection] = useState<'account' | 'password' | 'delete'>('account')
+  const [activeSection, setActiveSection] = useState<'account' | 'password' | 'delete' | 'commande'>('commande')
+  useEffect(() => {
+    if (activeSection === 'commande') {
+      fetchCommandes();
+    }
+  }, [activeSection]);
+
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
+    const storedUser = localStorage.getItem('user');
+
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser)
+      const parsedUser = JSON.parse(storedUser);
+
       setUser({
         nom: parsedUser.nom || '',
         prenom: parsedUser.prenom || '',
@@ -51,11 +65,39 @@ export default function MonCompte() {
         avatar: parsedUser.avatar || null,
         type: parsedUser.type || '',
         id_user: parsedUser.id_user || 0,
-      })
+      });
+
+      localStorage.setItem('id_user', parsedUser.id_user || ''); // Sauvegarde l'ID utilisateur si non vide
     } else {
-      setIsAuthorized(false)
+      console.error('Aucun utilisateur trouvé dans le localStorage');
+      setIsAuthorized(false);
     }
-  }, [])
+  }, []);
+
+
+  const fetchCommandes = async () => {
+    setIsLoading(true);
+
+    try {
+      const userId = user.id_user || localStorage.getItem('id_user');
+
+      if (!userId || userId === '0' || userId === '') {
+        throw new Error('ID utilisateur manquant');
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/detail_commande/all/${userId}`);
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des commandes');
+      }
+
+      const data = await response.json();
+      setCommandes(data);
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (field: keyof User, value: string) => {
     setUser({ ...user, [field]: value })
@@ -69,15 +111,15 @@ export default function MonCompte() {
   }
 
   const handleSaveChanges = async (event: React.FormEvent) => {
-    event.preventDefault(); // Empêche la soumission par défaut du formulaire
-  
+    event.preventDefault();
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user.id_user}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include", 
+        credentials: 'include',
         body: JSON.stringify({
           nom: user.nom,
           prenom: user.prenom,
@@ -89,17 +131,19 @@ export default function MonCompte() {
           type: user.type,
         }),
       });
-  
+
       if (!response.ok) {
         const error = await response.json();
-        console.error("Erreur backend :", error);
-        throw new Error("Erreur lors de la mise à jour du compte");
+        console.error('Erreur backend :', error);
+        throw new Error('Erreur lors de la mise à jour du compte');
       }
-  
+
       const updatedUser = await response.json();
-      console.log("Mise à jour réussie :", updatedUser);
-  
-      // Met à jour l'état local avec les nouvelles données
+
+      // Mise à jour du localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      // Optionnel : mettre à jour l'état utilisateur
       setUser({
         ...user,
         nom: updatedUser.nom,
@@ -111,18 +155,53 @@ export default function MonCompte() {
         adresse_livraison: updatedUser.adresse_livraison,
         type: updatedUser.type,
       });
-  
-      alert("Modifications enregistrées avec succès !");
+
+      alert('Modifications enregistrées avec succès !');
+
+      // Rechargement de la page
+      window.location.reload();
     } catch (error) {
       console.error(error);
-      alert("Une erreur est survenue lors de la mise à jour.");
+      alert('Une erreur est survenue lors de la mise à jour.');
     }
   };
-  
+  const handleDeleteAccount = async () => {
+    const confirmDelete = confirm(
+      "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user.id_user}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Erreur backend :", error);
+        throw new Error("Erreur lors de la suppression du compte.");
+      }
+
+      // Supprimer le compte du localStorage
+      localStorage.removeItem("user");
+
+      alert("Compte supprimé avec succès. Vous allez être redirigé vers la page d'accueil.");
+
+      // Redirection vers la page d'accueil
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+      alert("Une erreur est survenue lors de la suppression de votre compte.");
+    }
+  };
+
 
 
   if (!isAuthorized) {
-    // Page d'erreur si l'utilisateur n'est pas connecté
     return (
       <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
         <div className="text-center">
@@ -154,8 +233,16 @@ export default function MonCompte() {
         <div className="max-w-4xl mx-auto py-10 px-6">
           <h1 className="text-2xl font-semibold mb-8">Paramètres du compte</h1>
 
-          {/* Menu */}
           <div className="flex gap-4 mb-8">
+            <button
+              className={`px-4 py-2 rounded-md ${activeSection === 'commande'
+                ? 'bg-indigo-500 text-white'
+                : 'bg-gray-200 text-black hover:bg-gray-300'
+                }`}
+              onClick={() => setActiveSection('commande')}
+            >
+              Historique de commande
+            </button>
             <button
               className={`px-4 py-2 rounded-md ${activeSection === 'account'
                 ? 'bg-indigo-500 text-white'
@@ -184,11 +271,43 @@ export default function MonCompte() {
               Supprimer compte
             </button>
           </div>
-
-          {/* Formulaire dynamique */}
+          {activeSection === 'commande' && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Historique des commandes</h2>
+              {isLoading ? (
+                <p>Chargement...</p>
+              ) : (
+                <table className="table-auto w-full bg-white shadow rounded-md">
+                  <thead>
+                    <tr className="bg-gray-200 text-left">
+                      <th className="px-4 py-2">Date</th>
+                      <th className="px-4 py-2">Nombre Total</th>
+                      <th className="px-4 py-2">Prix Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commandes.length > 0 ? (
+                      commandes.map((commande, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="px-4 py-2">{commande.date}</td>
+                          <td className="px-4 py-2">{commande.nombre_total}</td>
+                          <td className="px-4 py-2">{Number(commande.prix_total).toFixed(2)} €</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="px-4 py-2 text-center" colSpan={3}>
+                          Aucune commande trouvée.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
           {activeSection === 'account' && (
             <form className="space-y-6">
-              {/* Avatar */}
               <div className="mb-6 flex items-center gap-6">
                 <img
                   src={user.avatar || 'https://via.placeholder.com/100'}
@@ -206,93 +325,40 @@ export default function MonCompte() {
                 </div>
               </div>
 
-              {/* Informations utilisateur */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium">Nom</label>
-                  <input
-                    type="text"
-                    value={user.nom}
-                    onChange={(e) => handleInputChange('nom', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Prénom</label>
-                  <input
-                    type="text"
-                    value={user.prenom}
-                    onChange={(e) => handleInputChange('prenom', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Email</label>
-                  <input
-                    type="email"
-                    value={user.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Téléphone</label>
-                  <input
-                    type="text"
-                    value={user.telephone}
-                    onChange={(e) => handleInputChange('telephone', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Pseudo</label>
-                  <input
-                    type="text"
-                    value={user.pseudo}
-                    onChange={(e) => handleInputChange('pseudo', e.target.value)}
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Adresse de facturation</label>
-                  <input
-                    type="text"
-                    value={user.adresse_facturation || ''}
-                    onChange={(e) =>
-                      handleInputChange('adresse_facturation', e.target.value)
-                    }
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium">Adresse de livraison</label>
-                  <input
-                    type="text"
-                    value={user.adresse_livraison || ''}
-                    onChange={(e) =>
-                      handleInputChange('adresse_livraison', e.target.value)
-                    }
-                    className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  {/* Vérifier si user.type n'est pas "admin" */}
-                  {user.type !== 'admin' && (
-                    <div>
-                      <label className="block text-sm font-medium">Type d'utilisateur</label>
-                      <select
-                        value={user.type}
-                        onChange={(e) => handleInputChange('type', e.target.value)}
-                        className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      >
-                        <option value="Beatmaker">Beatmaker</option>
-                        <option value="Client">Client</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+                {[
+                  { label: 'Nom', value: 'nom' },
+                  { label: 'Prénom', value: 'prenom' },
+                  { label: 'Email', value: 'email' },
+                  { label: 'Téléphone', value: 'telephone' },
+                  { label: 'Pseudo', value: 'pseudo' },
+                  { label: 'Adresse de facturation', value: 'adresse_facturation' },
+                  { label: 'Adresse de livraison', value: 'adresse_livraison' },
+                ].map(({ label, value }) => (
+                  <div key={value}>
+                    <label className="block text-sm font-medium">{label}</label>
+                    <input
+                      type="text"
+                      value={user[value as keyof User] || ''}
+                      onChange={(e) => handleInputChange(value as keyof User, e.target.value)}
+                      className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                ))}
 
+                <div>
+                  <label className="block text-sm font-medium">Type d'utilisateur</label>
+                  <select
+                    value={user.type}
+                    onChange={(e) => handleInputChange('type', e.target.value)}
+                    className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="Beatmaker">Beatmaker</option>
+                    <option value="Client">Client</option>
+                  </select>
+                </div>
               </div>
+
               <button
                 type="submit"
                 onClick={handleSaveChanges}
@@ -300,9 +366,9 @@ export default function MonCompte() {
               >
                 Enregistrer les modifications
               </button>
-
             </form>
           )}
+
 
           {activeSection === 'password' && (
             <form className="space-y-6">
@@ -310,22 +376,19 @@ export default function MonCompte() {
                 <label className="block text-sm font-medium">Mot de passe actuel</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium">Nouveau mot de passe</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium">Confirmer le mot de passe</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
               </div>
               <button
                 type="submit"
@@ -336,18 +399,20 @@ export default function MonCompte() {
             </form>
           )}
 
-          {activeSection === 'delete' && (
+          {activeSection === "delete" && (
             <div className="space-y-6">
               <p className="text-red-600 font-medium">
                 Attention : La suppression de votre compte est irréversible.
               </p>
               <button
                 className="w-full rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                onClick={handleDeleteAccount}
               >
                 Supprimer mon compte
               </button>
             </div>
           )}
+
         </div>
       </div>
     </>
