@@ -1,8 +1,8 @@
 'use client'
 
 import Header from '@/components/header'
-import { useState, useEffect } from 'react'
-import { PencilSquareIcon, CheckIcon } from '@heroicons/react/24/solid'
+import { useState, useEffect, ChangeEvent } from 'react'
+import { PencilSquareIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
 interface User {
   nom: string
@@ -127,12 +127,19 @@ export default function Playlist() {
     setEditableTrack({ ...track })
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditableTrack({
-      ...editableTrack,
-      [e.target.name]: e.target.value,
-    })
-  }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditableTrack((prev) => ({
+      ...prev,
+      [name]: value, // Met à jour dynamiquement le champ modifié
+    }));
+  };
+
+
+  const handleCancel = () => {
+    setEditableTrackId(null); // Réinitialise l'ID en édition
+    setEditableTrack({}); // Réinitialise les données modifiables
+  };
 
   const handleSave = async (id_track: number) => {
     try {
@@ -160,82 +167,150 @@ export default function Playlist() {
     }
   }
 
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>, key: string): void {
+    throw new Error('Function not implemented.')
+  }
+
   return (
     <>
       <Header />
       <div className="flex flex-col items-center p-6">
-        <h1 className="text-2xl font-bold mb-6">Playlist</h1>
-        <div className="mb-6">
-          <label className="block text-sm font-bold mb-2">Upload Audio:</label>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleAudioUpload}
-            className="border rounded p-2"
-          />
-          {audioUrl && (
-            <p className="text-sm text-green-500 mt-2">Audio URL: {audioUrl}</p>
-          )}
+        <h1 className="text-2xl font-bold mb-6 text-black">Playlist</h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+  {tracks.map((track) => (
+    <div
+      key={track.id_track}
+      className="flex flex-col bg-white border border-gray-300 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+    >
+      {/* Image de couverture */}
+      <div className="relative">
+        <img
+          src={track.cover}
+          alt={track.titre}
+          className="w-full h-48 object-cover rounded-t-lg"
+        />
+        <div className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-1 rounded-md opacity-75">
+          {track.genre}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tracks.map((track) => (
-            <div
-              key={track.id_track}
-              className="flex flex-col border p-4 rounded-md shadow-md"
-            >
-              <img
-                src={track.cover}
-                alt={track.titre}
-                className="w-full h-64 object-cover rounded-md mb-4"
-              />
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Contenu de la carte */}
+        {Object.keys(track)
+          .filter(
+            (key) =>
+              !["user", "id_track", "Link", "ThumbnailLink", "link", "thumbnailLink"].includes(key)
+          )
+          .map((key) => (
+            <div key={key} className="flex flex-col gap-1">
+              <label className="text-sm font-bold text-gray-700 capitalize">
+                {key}:
+              </label>
               {editableTrackId === track.id_track ? (
-                <>
-                  {Object.keys(track)
-                    .filter((key) => key !== 'user' && key !== 'id_track') // Exclure 'user' et 'id_track'
-                    .map((key) => (
-                      <div key={key} className="mb-2">
-                        <label className="block text-sm font-bold text-black">
-                          {key}:
-                        </label>
-                        <input
-                          type="text"
-                          name={key}
-                          value={(editableTrack as any)[key] || ''}
-                          onChange={handleInputChange}
-                          className="border rounded p-2 text-black w-full"
-                        />
-                      </div>
-                    ))}
-                  <button
-                    className="mt-4 bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center"
-                    onClick={() => handleSave(track.id_track)}
+                key === "cover" || key === "audio" ? (
+                  // Input file pour cover et audio
+                  <input
+                    type="file"
+                    name={key}
+                    onChange={(e) => handleFileChange(e, key)}
+                    className="border border-gray-300 bg-gray-50 text-sm text-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                ) : key === "cle" ? (
+                  // Liste déroulante pour cle
+                  <select
+                    name={key}
+                    value={editableTrack[key as keyof Track] || ""}
+                    onChange={handleInputChange}
+                    className="border border-gray-300 bg-gray-50 text-sm text-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
-                    <CheckIcon className="w-5 h-5 mr-2" /> Valider
-                  </button>
-                </>
+                    <option value="">Sélectionnez une clé</option>
+                    {[
+                      "C Major",
+                      "A Minor",
+                      "G Major",
+                      "E Minor",
+                      "D Major",
+                      "B Minor",
+                      "A Major",
+                      "F# Minor",
+                      "E Major",
+                      "C# Minor",
+                      "B Major",
+                      "G# Minor",
+                      "F Major",
+                      "D Minor",
+                    ].map((cle) => (
+                      <option key={cle} value={cle}>
+                        {cle}
+                      </option>
+                    ))}
+                  </select>
+                ) : key === "statut" ? (
+                  // Liste déroulante pour statut
+                  <select
+                    name={key}
+                    value={editableTrack[key as keyof Track] || ""}
+                    onChange={handleInputChange}
+                    className="border border-gray-300 bg-gray-50 text-sm text-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="Disponible">Disponible</option>
+                    <option value="Non disponible">Non disponible</option>
+                  </select>
+                ) : (
+                  // Input texte pour les autres champs
+                  <input
+                    type="text"
+                    name={key}
+                    value={editableTrack[key as keyof Track] || ""}
+                    onChange={handleInputChange}
+                    className="border border-gray-300 bg-gray-50 text-sm text-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                )
               ) : (
-                <>
-                  {Object.entries(track)
-                    .filter(([key]) => key !== 'user' && key !== 'id_track') // Exclure 'user' et 'id_track'
-                    .map(([key, value]) => (
-                      <p key={key} className="text-sm text-black">
-                        <strong>{key}:</strong>{' '}
-                        {typeof value === 'object' && value !== null
-                          ? JSON.stringify(value)
-                          : value}
-                      </p>
-                    ))}
-                  <button
-                    className="mt-4 bg-blue-500 text-white px-4 py-2 rounded flex items-center justify-center"
-                    onClick={() => handleEdit(track)}
-                  >
-                    <PencilSquareIcon className="w-5 h-5 mr-2" /> Modifier
-                  </button>
-                </>
+                // Affichage en mode lecture seule
+                <span className="text-sm text-gray-600">
+                  {track[key as keyof Track]}
+                </span>
               )}
             </div>
           ))}
-        </div>
+      </div>
+
+      {/* Boutons */}
+      <div className="flex gap-2 p-4 border-t border-gray-200 bg-gray-50">
+        {editableTrackId === track.id_track ? (
+          <>
+            <button
+              className="flex-1 bg-green-500 text-white py-2 rounded-md flex items-center justify-center hover:bg-green-600 transition-colors text-sm"
+              onClick={() => handleSave(track.id_track)}
+            >
+              <CheckIcon className="w-4 h-4 mr-1" /> Valider
+            </button>
+            <button
+              className="flex-1 bg-gray-500 text-white py-2 rounded-md flex items-center justify-center hover:bg-gray-600 transition-colors text-sm"
+              onClick={handleCancel}
+            >
+              <XMarkIcon className="w-4 h-4 mr-1" /> Annuler
+            </button>
+          </>
+        ) : (
+          <button
+            className="w-full bg-blue-500 text-white py-2 rounded-md flex items-center justify-center hover:bg-blue-600 transition-colors text-sm"
+            onClick={() => handleEdit(track)}
+          >
+            <PencilSquareIcon className="w-4 h-4 mr-1" /> Modifier
+          </button>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
+
+
+
+
+
       </div>
     </>
   )
