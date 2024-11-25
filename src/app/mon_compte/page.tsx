@@ -1,130 +1,135 @@
-'use client'
+"use client";
 
-import Header from '@/components/header'
-import { useState, useEffect } from 'react'
+import Header from "@/components/header";
+import { useState, useEffect } from "react";
 
 interface User {
-  nom: string
-  prenom: string
-  email: string
-  username: string
-  telephone: string
-  pseudo: string
-  adresse_facturation: string | null
-  adresse_livraison: string | null
-  avatar: string | null
-  type: string
-  id_user: number
+  nom: string;
+  prenom: string;
+  email: string;
+  username: string;
+  telephone: string;
+  pseudo: string;
+  adresse_facturation: string | null;
+  adresse_livraison: string | null;
+  avatar: string | null;
+  type: string;
+  id_user: number;
 }
+
 interface Commande {
   date: string;
   nombre_total: number;
   prix_total: number;
 }
+
 export default function MonCompte() {
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(true)
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null); // Aperçu de l'avatar
+  const [avatarFile, setAvatarFile] = useState<File | null>(null); // Fichier avatar
   const [user, setUser] = useState<User>({
-    nom: '',
-    prenom: '',
-    email: '',
-    username: '',
-    telephone: '',
-    pseudo: '',
-    adresse_facturation: '',
-    adresse_livraison: '',
+    nom: "",
+    prenom: "",
+    email: "",
+    username: "",
+    telephone: "",
+    pseudo: "",
+    adresse_facturation: "",
+    adresse_livraison: "",
     avatar: null,
-    type: '',
-    id_user: 0, // Définir à 0 par défaut
+    type: "",
+    id_user: 0,
   });
 
-  const [activeSection, setActiveSection] = useState<'account' | 'password' | 'delete' | 'commande'>('commande')
+  const [activeSection, setActiveSection] = useState<"account" | "password" | "delete" | "commande">(
+    "commande"
+  );
+
   useEffect(() => {
-    if (activeSection === 'commande') {
+    if (activeSection === "commande") {
       fetchCommandes();
     }
   }, [activeSection]);
 
-
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
 
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
 
       setUser({
-        nom: parsedUser.nom || '',
-        prenom: parsedUser.prenom || '',
-        email: parsedUser.email || '',
-        username: parsedUser.username || '',
-        telephone: parsedUser.telephone || '',
-        pseudo: parsedUser.pseudo || '',
-        adresse_facturation: parsedUser.adresse_facturation || '',
-        adresse_livraison: parsedUser.adresse_livraison || '',
+        nom: parsedUser.nom || "",
+        prenom: parsedUser.prenom || "",
+        email: parsedUser.email || "",
+        username: parsedUser.username || "",
+        telephone: parsedUser.telephone || "",
+        pseudo: parsedUser.pseudo || "",
+        adresse_facturation: parsedUser.adresse_facturation || "",
+        adresse_livraison: parsedUser.adresse_livraison || "",
         avatar: parsedUser.avatar || null,
-        type: parsedUser.type || '',
-        id_user: parsedUser.id_user ,
+        type: parsedUser.type || "",
+        id_user: parsedUser.id_user,
       });
-
-     
     } else {
-      console.error('Aucun utilisateur trouvé dans le localStorage');
+      console.error("Aucun utilisateur trouvé dans le localStorage");
       setIsAuthorized(false);
     }
   }, []);
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Le fichier avatar est trop volumineux (max 5MB).");
+        return;
+      }
+      setAvatarFile(file);
+      setPreviewAvatar(URL.createObjectURL(file));
+    }
+  };
 
   const fetchCommandes = async () => {
     setIsLoading(true);
-  
+
     try {
-      const userId = user?.id_user || localStorage.getItem('id_user');
-  
-      console.log('User ID:', userId); // Pour déboguer
-  
-      if (!userId || userId === '0' || userId === '') {
-        alert('Erreur : ID utilisateur manquant. Veuillez vérifier vos informations de connexion.');
-        throw new Error('ID utilisateur manquant');
+      const userId = user?.id_user || localStorage.getItem("id_user");
+
+      if (!userId || userId === "0" || userId === "") {
+        alert("Erreur : ID utilisateur manquant. Veuillez vérifier vos informations de connexion.");
+        throw new Error("ID utilisateur manquant");
       }
-  
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/detail_commande/all/${userId}`);
       if (!response.ok) {
-        throw new Error('Erreur lors de la récupération des commandes');
+        throw new Error("Erreur lors de la récupération des commandes");
       }
-  
+
       const data = await response.json();
       setCommandes(data);
     } catch (error) {
-      console.log('Erreur:', error);
+      console.log("Erreur:", error);
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   const handleInputChange = (field: keyof User, value: string) => {
-    setUser({ ...user, [field]: value })
-  }
-
-  const handleAvatarChange = () => {
-    const newAvatar = prompt('Entrez l’URL de votre nouvel avatar :')
-    if (newAvatar) {
-      setUser({ ...user, avatar: newAvatar })
-    }
-  }
+    setUser({ ...user, [field]: value });
+  };
 
   const handleSaveChanges = async (event: React.FormEvent) => {
     event.preventDefault();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user.id_user}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+      // Créer un objet FormData pour gérer les données utilisateur et l'avatar
+      const formData = new FormData();
+
+      // Ajouter les données utilisateur
+      formData.append(
+        "user",
+        JSON.stringify({
           nom: user.nom,
           prenom: user.prenom,
           email: user.email,
@@ -133,19 +138,30 @@ export default function MonCompte() {
           adresse_facturation: user.adresse_facturation || null,
           adresse_livraison: user.adresse_livraison || null,
           type: user.type,
-        }),
+        })
+      );
+
+      // Ajouter l'avatar si un fichier a été sélectionné
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${user.id_user}`, {
+        method: "PUT",
+        credentials: "include", // Inclut les cookies si nécessaire
+        body: formData, // Envoie le FormData
       });
 
       if (!response.ok) {
         const error = await response.json();
-        console.error('Erreur backend :', error);
-        throw new Error('Erreur lors de la mise à jour du compte');
+        console.error("Erreur backend :", error);
+        throw new Error("Erreur lors de la mise à jour du compte");
       }
 
       const updatedUser = await response.json();
 
       // Mise à jour du localStorage
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       // Optionnel : mettre à jour l'état utilisateur
       setUser({
@@ -158,17 +174,19 @@ export default function MonCompte() {
         adresse_facturation: updatedUser.adresse_facturation,
         adresse_livraison: updatedUser.adresse_livraison,
         type: updatedUser.type,
+        avatar: updatedUser.avatar, // Met à jour l'avatar si modifié
       });
 
-      alert('Modifications enregistrées avec succès !');
+      alert("Modifications enregistrées avec succès !");
 
       // Rechargement de la page
       window.location.reload();
     } catch (error) {
       console.error(error);
-      alert('Une erreur est survenue lors de la mise à jour.');
+      alert("Une erreur est survenue lors de la mise à jour.");
     }
   };
+
   const handleDeleteAccount = async () => {
     const confirmDelete = confirm(
       "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
@@ -203,8 +221,6 @@ export default function MonCompte() {
     }
   };
 
-
-
   if (!isAuthorized) {
     return (
       <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
@@ -228,8 +244,9 @@ export default function MonCompte() {
           </div>
         </div>
       </main>
-    )
+    );
   }
+
   return (
     <>
       <Header />
@@ -239,44 +256,40 @@ export default function MonCompte() {
 
           <div className="flex justify-between gap-2 mb-8">
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'commande'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('commande')}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${
+                activeSection === "commande" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              }`}
+              onClick={() => setActiveSection("commande")}
             >
               Historique de commande
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'account'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('account')}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${
+                activeSection === "account" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              }`}
+              onClick={() => setActiveSection("account")}
             >
               Compte
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'password'
-                ? 'bg-indigo-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('password')}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${
+                activeSection === "password" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              }`}
+              onClick={() => setActiveSection("password")}
             >
               Mot de passe
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === 'delete'
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-              onClick={() => setActiveSection('delete')}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${
+                activeSection === "delete" ? "bg-red-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              }`}
+              onClick={() => setActiveSection("delete")}
             >
               Supprimer compte
             </button>
           </div>
 
-          {activeSection === 'commande' && (
+          {activeSection === "commande" && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Historique des commandes</h2>
               {isLoading ? (
@@ -311,40 +324,41 @@ export default function MonCompte() {
               )}
             </div>
           )}
-          {activeSection === 'account' && (
-            <form className="space-y-6">
+
+          {activeSection === "account" && (
+            <form className="space-y-6" onSubmit={handleSaveChanges}>
               <div className="mb-6 flex items-center gap-6">
                 <img
-                  src={user.avatar || 'https://via.placeholder.com/100'}
+                  src={previewAvatar || user.avatar || "https://via.placeholder.com/100"}
                   alt="Avatar"
                   className="h-24 w-24 rounded-full bg-gray-300 object-cover"
                 />
                 <div>
-                  <button
-                    type="button"
-                    onClick={handleAvatarChange}
-                    className="rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-black hover:bg-gray-300"
-                  >
-                    Changer d'avatar
-                  </button>
+                  <label className="block text-sm font-medium">Changer d'avatar</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="mt-2 text-sm"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
-                  { label: 'Nom', value: 'nom' },
-                  { label: 'Prénom', value: 'prenom' },
-                  { label: 'Email', value: 'email' },
-                  { label: 'Téléphone', value: 'telephone' },
-                  { label: 'Pseudo', value: 'pseudo' },
-                  { label: 'Adresse de facturation', value: 'adresse_facturation' },
-                  { label: 'Adresse de livraison', value: 'adresse_livraison' },
+                  { label: "Nom", value: "nom" },
+                  { label: "Prénom", value: "prenom" },
+                  { label: "Email", value: "email" },
+                  { label: "Téléphone", value: "telephone" },
+                  { label: "Pseudo", value: "pseudo" },
+                  { label: "Adresse de facturation", value: "adresse_facturation" },
+                  { label: "Adresse de livraison", value: "adresse_livraison" },
                 ].map(({ label, value }) => (
                   <div key={value}>
                     <label className="block text-sm font-medium">{label}</label>
                     <input
                       type="text"
-                      value={user[value as keyof User] || ''}
+                      value={user[value as keyof User] || ""}
                       onChange={(e) => handleInputChange(value as keyof User, e.target.value)}
                       className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
                     />
@@ -355,7 +369,7 @@ export default function MonCompte() {
                   <label className="block text-sm font-medium">Type d'utilisateur</label>
                   <select
                     value={user.type}
-                    onChange={(e) => handleInputChange('type', e.target.value)}
+                    onChange={(e) => handleInputChange("type", e.target.value)}
                     className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="Beatmaker">Beatmaker</option>
@@ -366,7 +380,6 @@ export default function MonCompte() {
 
               <button
                 type="submit"
-                onClick={handleSaveChanges}
                 className="mt-6 w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600"
               >
                 Enregistrer les modifications
@@ -374,26 +387,28 @@ export default function MonCompte() {
             </form>
           )}
 
-
-          {activeSection === 'password' && (
+          {activeSection === "password" && (
             <form className="space-y-6">
               <div>
                 <label className="block text-sm font-medium">Mot de passe actuel</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium">Nouveau mot de passe</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium">Confirmer le mot de passe</label>
                 <input
                   type="password"
-                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500" />
+                  className="block w-full mt-2 rounded-md border border-black bg-indigo-50 py-2 px-3 shadow-sm text-gray-900 focus:border-black focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
               <button
                 type="submit"
@@ -417,9 +432,8 @@ export default function MonCompte() {
               </button>
             </div>
           )}
-
         </div>
       </div>
     </>
-  )
+  );
 }
