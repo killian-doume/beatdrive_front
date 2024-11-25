@@ -117,7 +117,7 @@ export default function TrackPage() {
 
         const sortedTracks = [...tracksWithUsers].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setTracks(sortedTracks);
-        
+
 
         const genreQuery = searchParams.get("genre") || "";
         const filtered = genreQuery
@@ -203,9 +203,13 @@ export default function TrackPage() {
 
     if (isAlreadyInCart) {
       setNotification(`"${track.titre}" avec la licence "${licenceType}" est déjà dans votre panier.`);
-      setTimeout(() => setNotification(null), 3000);
+      setTimeout(() => {
+        setNotification(null);
+        window.location.reload(); // Recharge la page après 3 secondes
+      }, 3000);
       return;
     }
+
 
     const cartItem = {
       id_track: track.id_track,
@@ -221,7 +225,10 @@ export default function TrackPage() {
     localStorage.setItem("cart", JSON.stringify(updatedCart));
 
     setNotification(`"${track.titre}" avec la licence "${licenceType}" a été ajouté au panier.`);
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => {
+      setNotification(null);
+      window.location.reload(); // Recharge la page après 3 secondes
+    }, 3000);
   };
 
   return (
@@ -230,7 +237,7 @@ export default function TrackPage() {
       <div className="bg-gray-100 p-8">
         <div className="max-w-7xl mx-auto">
           {notification && (
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg">
+            <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-2 rounded shadow-lg">
               {notification}
             </div>
           )}

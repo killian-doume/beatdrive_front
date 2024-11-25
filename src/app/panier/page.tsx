@@ -31,6 +31,7 @@ export default function Panier() {
     // Supprime l'élément côté frontend
     const updatedProducts = products.filter((product) => product.id_track !== id);
     setProducts(updatedProducts);
+    window.location.reload();
 
     // Supprime l'élément du localStorage
     localStorage.setItem('cart', JSON.stringify(updatedProducts));
@@ -51,9 +52,7 @@ export default function Panier() {
 
         <form className="mt-12">
           <section aria-labelledby="cart-heading">
-            <h2 id="cart-heading" className="sr-only">
-              Items in your shopping cart
-            </h2>
+           
 
             <ul role="list" className="divide-y divide-gray-200 border-b border-t border-gray-200">
               {products.length > 0 ? (
