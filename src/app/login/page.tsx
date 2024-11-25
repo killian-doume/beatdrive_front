@@ -16,6 +16,7 @@ export default function Login() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account`, {
         method: "POST",
         headers: {
+          "X-Requested-With":"XMLHttpRequest",
           "Content-Type": "application/json",
           "Authorization": "Basic " + btoa(email + ':' + password)
         },

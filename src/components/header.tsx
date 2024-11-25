@@ -93,13 +93,32 @@ export default function Header() {
     }
   }, []);
 
-  const handleSignOut = () => {
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUser(null);
-    window.location.assign('/');
-  };
+  const handleSignOut = async () => {
+    try {
+        // Appeler l'API backend pour effectuer la déconnexion
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
+            method: 'POST', // Méthode POST est souvent utilisée pour /logout
+            credentials: 'include', // Inclure les cookies dans la requête
+        });
 
+        // Vérification de la réponse
+        if (!response.ok) {
+            throw new Error(`Erreur lors de la déconnexion : ${response.statusText}`);
+        }
+
+        // Nettoyer les données côté client
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setUser(null);
+
+        // Rediriger vers la page d'accueil
+        window.location.assign('/');
+    } catch (error) {
+        console.error('Erreur lors de la déconnexion :', error);
+    }
+};
+
+  
   const handleRemoveItem = (id: number) => {
     const updatedCart = cartItems.filter((item) => item.id_track !== id);
     setCartItems(updatedCart);

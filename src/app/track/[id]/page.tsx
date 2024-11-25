@@ -16,17 +16,20 @@ export interface Track {
     audio: string;
     cover: string;
     statut: string;
-    user: {
-        id_user: number;
-        nom: string;
-        prenom: string;
-        pseudo: string;
-        email: string;
-        telephone: string;
-        avatar: string;
-    };
+    id_user: string;
 }
-interface LicenceTrack {
+
+export interface User {
+    id_user: number;
+    nom: string;
+    prenom: string;
+    pseudo: string;
+    email: string;
+    telephone: string;
+    avatar: string;
+}
+
+export interface LicenceTrack {
     id_licence_track: number;
     type: string;
     prix: string;
@@ -35,6 +38,7 @@ interface LicenceTrack {
 export default function TrackIdPage() {
     const { id } = useParams();
     const [track, setTrack] = useState<Track | null>(null);
+    const [user, setUser] = useState<User | null>(null); // Ajouté pour stocker les données utilisateur
     const [licenceTrack, setLicenceTrack] = useState<LicenceTrack[]>([]);
     const [notification, setNotification] = useState<string | null>(null);
 
@@ -43,36 +47,52 @@ export default function TrackIdPage() {
 
         const fetchTrackById = async () => {
             try {
+                // Récupération du morceau
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/track/${id}`
                 );
                 if (!response.ok) {
-                    throw new Error("Erreur lors de la récupération du track");
+                    console.error("Erreur lors de la récupération du morceau:", response.statusText);
+                    return; // Stop la fonction en cas d'erreur
                 }
-                const data: Track = await response.json();
-                setTrack(data);
-
+                const trackData: Track = await response.json();
+                setTrack(trackData);
+        
+                // Récupération de l'utilisateur associé
+                const userResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/user/${trackData.id_user}`
+                );
+                if (!userResponse.ok) {
+                    console.error("Erreur lors de la récupération de l'utilisateur:", userResponse.statusText);
+                    return; // Stop la fonction en cas d'erreur
+                }
+                const userData: User = await userResponse.json();
+                setUser(userData);
+        
+                // Récupération des licences associées au morceau
                 const licenceResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/licence_track/${data.id_track}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/licence_track/${trackData.id_track}`
                 );
                 if (!licenceResponse.ok) {
-                    throw new Error("Erreur lors de la récupération des licences");
+                    console.log("Erreur lors de la récupération des licences:", licenceResponse.statusText);
+                    return; // Stop la fonction en cas d'erreur
                 }
                 const licences: LicenceTrack[] = await licenceResponse.json();
                 setLicenceTrack(licences);
             } catch (error) {
-                console.error("Erreur:", error);
+                console.error("Erreur inattendue:", error);
             }
         };
+        
 
         fetchTrackById();
     }, [id]);
 
     const handleAddLicenceToCart = (licence: LicenceTrack) => {
         if (!track) return;
-    
+
         const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
-    
+
         const newCartItem = {
             id_track: track.id_track,
             titre: track.titre,
@@ -83,30 +103,29 @@ export default function TrackIdPage() {
             licence: licence.type, // Type de la licence
             id_licence_track: licence.id_licence_track, // Ajout pour identifier les licences
         };
-    
+
         // Filtrer pour retirer toute licence existante pour le même id_track
         const updatedCart = existingCart.filter(
             (item: { id_track: number }) => item.id_track !== track.id_track
         );
-    
+
         // Ajouter l'élément mis à jour
         updatedCart.push(newCartItem);
-    
+
         // Sauvegarder dans le localStorage
         localStorage.setItem("cart", JSON.stringify(updatedCart));
-    
+
         // Notification de succès
-        setNotification(`"${track.titre}" ajouté au panier pour ${licence.prix}€ et de licence "${licence.type}".`);
-    
+        setNotification(
+            `"${track.titre}" ajouté au panier pour ${licence.prix}€ avec la licence "${licence.type}".`
+        );
+
         // Réinitialiser la notification après un délai
         setTimeout(() => {
             setNotification(null);
             window.location.reload();
         }, 3000);
     };
-    
-    
-    
 
     return (
         <>
@@ -129,7 +148,7 @@ export default function TrackIdPage() {
                         <div className="pl-20">
                             <h1 className="text-2xl font-bold text-gray-800">{track.titre}</h1>
                             <p className="text-gray-600 mt-2">
-                                <strong>Auteur :</strong> {track.user.pseudo}
+                                <strong>Auteur :</strong> {user?.pseudo || "Auteur inconnu"}
                             </p>
                             <p className="text-gray-600 mt-2">
                                 <strong>Description :</strong> {track.description}

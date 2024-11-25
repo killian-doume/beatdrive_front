@@ -64,7 +64,7 @@ export default function MonCompte() {
         adresse_livraison: parsedUser.adresse_livraison || '',
         avatar: parsedUser.avatar || null,
         type: parsedUser.type || '',
-        id_user: parsedUser.id_user || 0,
+        id_user: parsedUser.id_user ,
       });
 
       localStorage.setItem('id_user', parsedUser.id_user || ''); // Sauvegarde l'ID utilisateur si non vide
@@ -77,27 +77,31 @@ export default function MonCompte() {
 
   const fetchCommandes = async () => {
     setIsLoading(true);
-
+  
     try {
-      const userId = user.id_user || localStorage.getItem('id_user');
-
+      const userId = user?.id_user || localStorage.getItem('id_user');
+  
+      console.log('User ID:', userId); // Pour déboguer
+  
       if (!userId || userId === '0' || userId === '') {
+        alert('Erreur : ID utilisateur manquant. Veuillez vérifier vos informations de connexion.');
         throw new Error('ID utilisateur manquant');
       }
-
+  
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/detail_commande/all/${userId}`);
       if (!response.ok) {
         throw new Error('Erreur lors de la récupération des commandes');
       }
-
+  
       const data = await response.json();
       setCommandes(data);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.log('Erreur:', error);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const handleInputChange = (field: keyof User, value: string) => {
     setUser({ ...user, [field]: value })

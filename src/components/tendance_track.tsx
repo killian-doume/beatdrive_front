@@ -6,27 +6,55 @@ import { useRouter } from "next/navigation";
 interface Track {
   id_track: number; // L'identifiant unique pour le morceau
   titre: string; // Le titre du morceau
-  user: {
-    pseudo: string; // Le pseudo de l'utilisateur
-  };
+  id_user: number; // L'identifiant de l'utilisateur associé
   cover: string; // L'image du morceau
+}
+
+interface User {
+  id_user: number;
+  nom: string;
+  prenom: string;
+  pseudo: string;
+  email: string;
+  telephone: string;
+  avatar: string;
 }
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [userPseudoMap, setUserPseudoMap] = useState<Record<number, string>>(
+    {}
+  ); // Map pour associer id_user à pseudo
   const router = useRouter();
 
   useEffect(() => {
-    // Récupération des données depuis l'API
     const fetchTracks = async () => {
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/track/limit/5`
         );
-        const data: Track[] = await response.json(); // Type de réponse attendu : Track[]
-        setTracks(data); // Mise à jour de l'état avec les morceaux
+        const data: Track[] = await response.json();
+        setTracks(data);
+
+        // Après avoir récupéré les morceaux, récupérer les pseudos utilisateurs
+        const userPseudoPromises = data.map(async (track) => {
+          const userResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/user/${track.id_user}`
+          );
+          const userData: User = await userResponse.json();
+          return { id_user: track.id_user, pseudo: userData.pseudo };
+        });
+
+        // Résoudre toutes les promesses et mettre à jour la map des pseudos
+        const userPseudoResults = await Promise.all(userPseudoPromises);
+        const pseudoMap: Record<number, string> = {};
+        userPseudoResults.forEach(({ id_user, pseudo }) => {
+          pseudoMap[id_user] = pseudo;
+        });
+
+        setUserPseudoMap(pseudoMap);
       } catch (error) {
-        console.error("Erreur lors de la récupération des données :", error);
+        console.error("Erreur lors de la récupération des morceaux ou utilisateurs :", error);
       }
     };
 
@@ -50,15 +78,17 @@ export default function Home() {
             <div
               key={track.id_track}
               className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center"
-              onClick={() => router.push(`/track/${track.id_track}`)} // Redirection vers la page de détail
+              onClick={() => router.push(`/track/${track.id_track}`)}
             >
               <img
-                src={track.cover } // Si l'image est manquante, affiche une image par défaut
+                src={track.cover || "/default-cover.jpg"}
                 alt={track.titre}
                 className="w-full h-32 object-cover rounded-md mb-2"
               />
               <h2 className="text-lg font-semibold text-black mb-1">{track.titre}</h2>
-              <p className="text-gray-500 mb-2">By : {track.user.pseudo}</p>
+              <p className="text-gray-500 mb-2">
+                By : {userPseudoMap[track.id_user] || "Utilisateur inconnu"}
+              </p>
               <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-500">
                 Voir les détails
               </button>

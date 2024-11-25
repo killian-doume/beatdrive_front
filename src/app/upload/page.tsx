@@ -1,24 +1,25 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Header from '@/components/header';
+import { useState, useEffect } from "react";
+import Header from "@/components/header";
 
 export default function UploadTrack() {
-  const [titre, setTitre] = useState<string>(''); // Titre
-  const [date, setDate] = useState<string>(''); // Date
-  const [bpm, setBpm] = useState<string>(''); // BPM
-  const [description, setDescription] = useState<string>(''); // Description
-  const [cle, setCle] = useState<string>(''); // Clé musicale
-  const [genre, setGenre] = useState<string>(''); // Genre
-  const [type, setType] = useState<string>(''); // Type
-  const [audio, setAudio] = useState<string>(''); // Audio
-  const [status, setStatus] = useState<string>(''); // Status
+  const [titre, setTitre] = useState<string>(""); // Titre
+  const [date, setDate] = useState<string>(""); // Date
+  const [bpm, setBpm] = useState<string>(""); // BPM
+  const [description, setDescription] = useState<string>(""); // Description
+  const [cle, setCle] = useState<string>(""); // Clé musicale
+  const [genre, setGenre] = useState<string>(""); // Genre
+  const [type, setType] = useState<string>(""); // Type
+  const [status, setStatus] = useState<string>("Disponible"); // Statut
   const [cover, setCover] = useState<File | null>(null); // Fichier image
-  const [userId, setUserId] = useState<string>(''); // ID utilisateur
+  const [audioFile, setAudioFile] = useState<File | null>(null); // Fichier audio
+  const [userId, setUserId] = useState<string>(""); // ID utilisateur
   const [previewCover, setPreviewCover] = useState<string | null>(null); // Aperçu de l'image
+  const [previewAudio, setPreviewAudio] = useState<string | null>(null); // Aperçu de l'audio
 
   // Récupérer l'id_user depuis le localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -30,69 +31,98 @@ export default function UploadTrack() {
       }
     }
   }, []);
+  const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) { // Limite de 50MB
+        alert("Le fichier audio est trop volumineux (max 50MB).");
+        return;
+      }
+      setAudioFile(file);
+      setPreviewAudio(URL.createObjectURL(file));
+    }
+  };
 
+  
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // Limite de 5MB
+        alert("Le fichier de couverture est trop volumineux (max 5MB).");
+        return;
+      }
       setCover(file);
       setPreviewCover(URL.createObjectURL(file));
     }
   };
+  
+  // Nettoyage des URLs temporaires pour éviter les fuites de mémoire
+  useEffect(() => {
+    return () => {
+      if (previewCover) URL.revokeObjectURL(previewCover);
+      if (previewAudio) URL.revokeObjectURL(previewAudio);
+    };
+  }, [previewCover, previewAudio]);
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-
-    if (!titre || !date || !bpm || !description || !cle || !genre || !type || !audio || !cover || !userId) {
+  
+    // Vérifiez que tous les champs obligatoires sont remplis
+    if (!titre || !bpm || !description || !cle || !genre || !type || !audioFile || !cover || !userId) {
       alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
+  
 
+    // Préparation des données track
+    const trackData = {
+      titre,
+      date: "2024-10-25", // Testez avec une date fixe
+      bpm,
+      description,
+      cle,
+      genre,
+      type,
+      statut: status,
+      id_user: userId ,
+    };
+    
+  
+    // Création de l'objet FormData
+    const formData = new FormData();
+    formData.append("track", JSON.stringify(trackData)); // Ajout des données track sous forme de JSON
+    formData.append("src", cover); // Ajout du fichier cover
+    formData.append("audio", audioFile); // Ajout du fichier audio
+  
     try {
-      const formData = new FormData();
-
-      // Ajouter l'objet track en tant que chaîne JSON
-      const trackData = {
-        titre,
-        date,
-        bpm,
-        description,
-        cle,
-        genre,
-        type,
-        audio,
-        status,
-        user: { id_user: userId }, // Inclure l'id_user
-      };
-      formData.append("track", JSON.stringify(trackData));
-
-      // Ajouter l'image cover
-      formData.append("src", cover);
-
+      // Envoi de la requête vers l'API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`, {
         method: "POST",
         credentials: "include",
-        body: formData, // Ne pas inclure de Content-Type, fetch le gère automatiquement pour le multipart/form-data
+        body: formData,
       });
+      console.log("Données envoyées :", JSON.stringify(trackData));
+
+
 
       if (response.ok) {
+        // Traitez la réponse si la requête a réussi
         const result = await response.json();
         console.log("Track créé avec succès :", result);
         alert("Track créé avec succès !");
       } else {
-        const errorData = await response.json();
+        // Affichez un message d'erreur si la requête échoue
+        const errorData = await response.text(); // Utilisation de .text() pour des messages d'erreur plus détaillés
         console.error("Erreur lors de la création du track :", errorData);
-        alert(`Erreur : ${errorData.message || "Une erreur est survenue"}`);
+        alert("Erreur lors de la création du track.");
       }
     } catch (error) {
+      // Gestion des erreurs réseau ou autres
       console.error("Erreur lors de la requête :", error);
       alert("Une erreur s'est produite lors de la requête.");
     }
   };
-
-
-  function handleAudioChange(event: ChangeEvent<HTMLInputElement>): void {
-    throw new Error('Function not implemented.');
-  }
+  
 
   return (
     <>
@@ -106,7 +136,6 @@ export default function UploadTrack() {
         >
           {/* Section de gauche : Inputs */}
           <div className="space-y-4">
-            {/* Titre */}
             <div>
               <label className="block text-black font-medium mb-2">Titre:</label>
               <input
@@ -118,20 +147,6 @@ export default function UploadTrack() {
                 required
               />
             </div>
-
-            {/* Date */}
-            <div>
-              <label className="block text-black font-medium mb-2">Date:</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
-                required
-              />
-            </div>
-
-            {/* BPM */}
             <div>
               <label className="block text-black font-medium mb-2">BPM:</label>
               <input
@@ -143,8 +158,6 @@ export default function UploadTrack() {
                 required
               />
             </div>
-
-            {/* Genre */}
             <div>
               <label className="block text-black font-medium mb-2">Genre:</label>
               <input
@@ -156,8 +169,6 @@ export default function UploadTrack() {
                 required
               />
             </div>
-
-            {/* Type */}
             <div>
               <label className="block text-black font-medium mb-2">Type:</label>
               <input
@@ -169,8 +180,6 @@ export default function UploadTrack() {
                 required
               />
             </div>
-
-            {/* Clé musicale */}
             <div>
               <label className="block text-black font-medium mb-2">Clé musicale:</label>
               <select
@@ -194,8 +203,6 @@ export default function UploadTrack() {
                 <option value="B">B</option>
               </select>
             </div>
-
-            {/* Statut */}
             <div>
               <label className="block text-black font-medium mb-2">Statut:</label>
               <select
@@ -208,7 +215,6 @@ export default function UploadTrack() {
                 <option value="Non disponible">Non disponible</option>
               </select>
             </div>
-            {/* Description */}
             <div>
               <label className="block text-black font-medium mb-2">Description:</label>
               <textarea
@@ -223,7 +229,6 @@ export default function UploadTrack() {
 
           {/* Section de droite : Upload */}
           <div className="space-y-6">
-            {/* Cover Upload */}
             <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
               <label className="block text-black font-medium mb-2">Cover (jpg):</label>
               <input
@@ -244,11 +249,8 @@ export default function UploadTrack() {
                 </div>
               )}
             </div>
-
-            {/* Audio Upload */}
-           {/* Cover Upload */}
-           <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
-              <label className="block text-black font-medium mb-2">Audio (mp3)</label>
+            <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
+              <label className="block text-black font-medium mb-2">Audio (mp3):</label>
               <input
                 type="file"
                 accept="audio/*"
@@ -256,19 +258,15 @@ export default function UploadTrack() {
                 className="w-full text-sm"
                 required
               />
-              {previewCover && (
+              {previewAudio && (
                 <div className="mt-4">
-                 
-                  <img
-                    src={previewCover}
-                    alt="Preview"
-                    className="mt-2 max-w-full h-auto rounded"
-                  />
+                  <p className="text-black">Aperçu de l'audio :</p>
+                  <audio controls src={previewAudio} className="mt-2 w-full">
+                    Votre navigateur ne supporte pas l'élément audio.
+                  </audio>
                 </div>
               )}
             </div>
-
-            {/* Bouton Envoyer */}
             <button
               type="submit"
               className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
