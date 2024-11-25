@@ -73,20 +73,21 @@ export default function UploadTrack() {
       return;
     }
   
-
+    // Obtenez la date d'aujourd'hui au format ISO (par exemple, "2024-11-25T12:34:56.789Z")
+    const today = new Date().toISOString();
+  
     // Préparation des données track
     const trackData = {
       titre,
-      date: "2024-10-25", // Testez avec une date fixe
+      date: today, // Utilisation de la date actuelle
       bpm,
       description,
       cle,
       genre,
       type,
       statut: status,
-      id_user: userId ,
+      id_user: userId,
     };
-    
   
     // Création de l'objet FormData
     const formData = new FormData();
@@ -102,9 +103,7 @@ export default function UploadTrack() {
         body: formData,
       });
       console.log("Données envoyées :", JSON.stringify(trackData));
-
-
-
+  
       if (response.ok) {
         // Traitez la réponse si la requête a réussi
         const result = await response.json();
@@ -112,7 +111,7 @@ export default function UploadTrack() {
         alert("Track créé avec succès !");
       } else {
         // Affichez un message d'erreur si la requête échoue
-        const errorData = await response.text(); // Utilisation de .text() pour des messages d'erreur plus détaillés
+        const errorData = await response.text();
         console.error("Erreur lors de la création du track :", errorData);
         alert("Erreur lors de la création du track.");
       }
@@ -122,6 +121,7 @@ export default function UploadTrack() {
       alert("Une erreur s'est produite lors de la requête.");
     }
   };
+  
   
 
   return (

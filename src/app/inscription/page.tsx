@@ -12,12 +12,12 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [telephone, setTelephone] = useState("");
   const [type, setType] = useState("beatmaker");
-  const [avatar, setAvatar] = useState("");
+  const [cover, setCover] = useState<File | null>(null); // Fichier image
+  const [previewCover, setPreviewCover] = useState<string | null>(null); // Aperçu de l'image
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const router = useRouter();
-
   const passwordsMatch = password === confirmPassword && confirmPassword !== "";
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -28,8 +28,15 @@ export default function Register() {
       return;
     }
 
+    if (!cover) {
+      setError("Veuillez ajouter une couverture.");
+      return;
+    }
+
     try {
-      const payload = {
+      // Crée un FormData pour inclure le fichier et les données utilisateur
+      const formData = new FormData();
+      const userPayload = {
         nom,
         prenom,
         pseudo,
@@ -37,32 +44,42 @@ export default function Register() {
         password,
         telephone,
         type,
-        avatar: avatar || "https://t4.ftcdn.net/jpg/03/49/49/79/360_F_349497933_Ly4im8BDmHLaLzgyKg2f2yZOvJjBtlw5.webp",
       };
+      formData.append("user", JSON.stringify(userPayload));
+      formData.append("cover", cover);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        body: formData, // Envoi de FormData au lieu de JSON brut
       });
 
       if (response.ok) {
         setSuccess("Compte créé avec succès ! Vous allez être redirigé vers la page d'accueil.");
-        console.log(response);
         setError(null);
         setTimeout(() => {
           router.push("/");
-        }, 5000); // Redirection après 3 secondes
+        }, 3000); // Redirection après 3 secondes
       } else {
         const errorData = await response.json();
-        setError("Un compte avec cet email existe déjà.");
+        setError(errorData.message || "Une erreur s'est produite.");
         setSuccess(null);
       }
     } catch (err) {
       setError("Une erreur s'est produite lors de la requête.");
       setSuccess(null);
+    }
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        // Limite de 5MB
+        alert("Le fichier de couverture est trop volumineux (max 5MB).");
+        return;
+      }
+      setCover(file);
+      setPreviewCover(URL.createObjectURL(file));
     }
   };
 
@@ -84,8 +101,6 @@ export default function Register() {
               </button>
             </div>
             <p className="mt-4 text-gray-700">{success}</p>
-            <div className="mt-6 flex justify-end">
-            </div>
           </div>
         </div>
       )}
@@ -101,14 +116,6 @@ export default function Register() {
               </button>
             </div>
             <p className="mt-4 text-gray-700">{error}</p>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-              >
-                Fermer
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -254,32 +261,25 @@ export default function Register() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-center w-full">
-                <label
-                  htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-100"
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <ArrowUpTrayIcon className="w-8 h-8 mb-4 text-gray-400" />
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Cliquez pour télécharger</span> ou faites glisser et déposez
-                    </p>
-                    <p className="text-xs text-gray-500">PNG, JPG</p>
+              <div className="border-dashed border-2 border-gray-300 rounded-lg p-4 text-center">
+                <label className="block text-black font-medium mb-2">Cover (jpg):</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverChange}
+                  className="w-full text-sm"
+                  required
+                />
+                {previewCover && (
+                  <div className="mt-4">
+                    <p className="text-black">Aperçu de l'image :</p>
+                    <img
+                      src={previewCover}
+                      alt="Preview"
+                      className="mt-2 max-w-full h-auto rounded"
+                    />
                   </div>
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        const reader = new FileReader();
-                        reader.onload = () => setAvatar(reader.result as string);
-                        reader.readAsDataURL(e.target.files[0]);
-                      }
-                    }}
-                  />
-                </label>
+                )}
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}

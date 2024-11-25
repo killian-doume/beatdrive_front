@@ -106,7 +106,6 @@ export default function TrackPage() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
         const data: Track[] = await response.json();
-
         // Récupérer les informations utilisateur pour chaque morceau
         const tracksWithUsers = await Promise.all(
           data.map(async (track) => {
@@ -116,8 +115,9 @@ export default function TrackPage() {
           })
         );
 
-        const sortedTracks = tracksWithUsers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const sortedTracks = [...tracksWithUsers].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setTracks(sortedTracks);
+        
 
         const genreQuery = searchParams.get("genre") || "";
         const filtered = genreQuery

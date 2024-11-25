@@ -26,6 +26,7 @@ export default function Login() {
       if (response.ok) {
         const data = await response.json();
         console.log("Connexion réussie :", data);
+        localStorage.setItem('id_user', data.id_user || ''); 
     
         // Filtrer les données nécessaires
         const filteredData = {

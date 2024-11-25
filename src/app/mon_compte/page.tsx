@@ -67,7 +67,7 @@ export default function MonCompte() {
         id_user: parsedUser.id_user ,
       });
 
-      localStorage.setItem('id_user', parsedUser.id_user || ''); // Sauvegarde l'ID utilisateur si non vide
+     
     } else {
       console.error('Aucun utilisateur trouvé dans le localStorage');
       setIsAuthorized(false);
