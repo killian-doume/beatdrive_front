@@ -54,10 +54,10 @@ export default function Register() {
       });
 
       if (response.ok) {
-        setSuccess("Compte créé avec succès ! Vous allez être redirigé vers la page d'accueil.");
+        setSuccess("Compte créé avec succès ! Vous allez être redirigé vers la page login.");
         setError(null);
         setTimeout(() => {
-          router.push("/");
+          router.push("/login");
         }, 3000); // Redirection après 3 secondes
       } else {
         const errorData = await response.json();
