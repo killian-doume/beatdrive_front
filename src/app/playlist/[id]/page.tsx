@@ -46,6 +46,8 @@ export default function TrackIdPage() {
     const [notification, setNotification] = useState<string | null>(null);
     const [previewCover, setPreviewCover] = useState<string | null>(null);
     const [previewAudio, setPreviewAudio] = useState<string | null>(null);
+    const [cover, setCover] = useState<File | null>(null); // Fichier image
+    const [audioFile, setAudioFile] = useState<File | null>(null); // Fichier audio
 
     useEffect(() => {
         if (!id) return;
@@ -102,26 +104,27 @@ export default function TrackIdPage() {
     const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreviewCover(reader.result as string);
-                handleChange("cover", reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 5 * 1024 * 1024) { // Limite de 5MB
+                alert("Le fichier de couverture est trop volumineux (max 5MB).");
+                return;
+            }
+            setCover(file);
+            setPreviewCover(URL.createObjectURL(file));
         }
     };
 
     const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreviewAudio(reader.result as string);
-                handleChange("audio", reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 50 * 1024 * 1024) { // Limite de 50MB
+                alert("Le fichier audio est trop volumineux (max 50MB).");
+                return;
+            }
+            setAudioFile(file);
+            setPreviewAudio(URL.createObjectURL(file));
         }
     };
+
 
     const handleSaveTrack = async () => {
         if (!editedTrack) return;
@@ -154,7 +157,12 @@ export default function TrackIdPage() {
                 setEditingtrack(false);
                 setEditinglicence(false);
                 setNotification("Mise à jour réussie !");
-                setTimeout(() => setNotification(null), 3000);
+                console.log("Mise à jour de la cover avec la valeur : {}", updatedTrack);
+
+                setTimeout(() => {
+                    setNotification(null);
+                    window.location.reload(); // Recharge la page
+                }, 3000);
             } else {
                 console.error("Erreur lors de la sauvegarde :", response.statusText);
             }
@@ -165,11 +173,12 @@ export default function TrackIdPage() {
 
     const handleSaveLicence = async () => {
         try {
-            for (const licence of licenceTrack) {
+            // Gestion des PUT pour les licences existantes
+            for (const licence of licenceTrack.filter((l) => l.id_licence_track)) {
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/licence_track/${licence.id_licence_track}`,
                     {
-                        method: licence.id_licence_track ? "PUT" : "POST",
+                        method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(licence),
                     }
@@ -180,6 +189,8 @@ export default function TrackIdPage() {
                 }
             }
 
+         
+
             setNotification("Licences mises à jour avec succès !");
             setTimeout(() => setNotification(null), 3000);
         } catch (error) {
@@ -187,13 +198,53 @@ export default function TrackIdPage() {
         }
     };
 
+
     const handleSavetrack = () => {
         handleSaveTrack();
     };
     const handleSavelicence = () => {
-      
+
         handleSaveLicence();
     };
+
+    
+    const postNewLicence = async () => {
+        if (!track) {
+            console.error("Le track n'est pas disponible");
+            return;
+        }
+    
+        try {
+            const newLicence = {
+                track, // Inclut l'objet Track complet
+                type: "", // Valeur par défaut pour le type
+                prix: "", // Valeur par défaut pour le prix
+            };
+    
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/licence_track`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newLicence),
+            });
+    
+            if (response.ok) {
+                const createdLicence = await response.json();
+                setLicenceTrack((prevLicences) => [...prevLicences, createdLicence]);
+                setNotification("Nouvelle licence ajoutée avec succès !");
+                console.log("Nouvelle licence créée avec la valeur : {}", createdLicence);
+                setTimeout(() => {
+                    setNotification(null);
+                    window.location.reload(); // Recharger la page après succès
+                }, 3000);
+            } else {
+                console.error("Erreur lors de la création de la licence :", response.statusText);
+            }
+        } catch (error) {
+            console.error("Erreur inattendue lors de la création de la licence :", error);
+        }
+    };
+    
+
 
     return (
         <>
@@ -295,16 +346,45 @@ export default function TrackIdPage() {
                             <p>
                                 <strong>Clé musicale:</strong>{" "}
                                 {editingtrack ? (
-                                    <input
-                                        type="text"
+                                    <select
                                         value={editedTrack?.cle || ""}
                                         onChange={(e) => handleChange("cle", e.target.value)}
                                         className="border p-2 rounded w-full"
-                                    />
+                                    >
+                                        <option value="">Sélectionnez une clé musicale</option>
+                                        <option value="C">C</option>
+                                        <option value="C#">C#</option>
+                                        <option value="D">D</option>
+                                        <option value="D#">D#</option>
+                                        <option value="E">E</option>
+                                        <option value="F">F</option>
+                                        <option value="F#">F#</option>
+                                        <option value="G">G</option>
+                                        <option value="G#">G#</option>
+                                        <option value="A">A</option>
+                                        <option value="A#">A#</option>
+                                        <option value="B">B</option>
+                                    </select>
                                 ) : (
                                     track.cle
                                 )}
                             </p>
+                            <p>
+                                <strong>Statut :</strong>{" "}
+                                {editingtrack ? (
+                                    <select
+                                        value={editedTrack?.statut || ""}
+                                        onChange={(e) => handleChange("statut", e.target.value)}
+                                        className="border p-2 rounded w-full"
+                                    >
+                                        <option value="Disponible">Disponible</option>
+                                        <option value="Non disponible">Non disponible</option>
+                                    </select>
+                                ) : (
+                                    track.statut
+                                )}
+                            </p>
+
                             <p>
                                 <strong>Description :</strong>{" "}
                                 {editingtrack ? (
@@ -364,12 +444,17 @@ export default function TrackIdPage() {
                                 </button>
                             )}
                         </div>
+
                         {/* Licences */}
                         <div className="pt-8">
                             <h2 className="text-2xl font-bold">Licences</h2>
                             <div className="grid grid-cols-3 gap-4 mt-4">
                                 {licenceTrack.map((licence, index) => (
-                                    <div key={licence.id_licence_track || index} className="p-4 border border-gray-300 rounded-lg">
+                                    <div
+                                        // Utilisation d'une clé unique : soit `id_licence_track`, soit une combinaison de l'index et d'un préfixe
+                                        key={licence.id_licence_track || `new-licence-${index}`}
+                                        className="p-4 border border-gray-300 rounded-lg"
+                                    >
                                         {editinglicence ? (
                                             <div>
                                                 <input
@@ -407,23 +492,21 @@ export default function TrackIdPage() {
                                     </div>
                                 ))}
                             </div>
+
                             {editinglicence && (
-                                <button
-                                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
-                                    onClick={() =>
-                                        setLicenceTrack((prev) => [
-                                            ...prev,
-                                            { id_licence_track: 0, type: "", prix: "" },
-                                        ])
-                                    }
-                                >
-                                    Ajouter une licence
-                                </button>
+                                <div className="mt-4">
+                                    <button
+                                        className="px-4 py-2 bg-blue-500 text-white rounded"
+                                        onClick={postNewLicence}
+                                    >
+                                        Ajouter une licence
+                                    </button>
+                                </div>
                             )}
                         </div>
 
                         {/* Boutons */}
-                        <div className="flex space-x-4">
+                        <div className="flex space-x-4 mt-4">
                             <button
                                 onClick={handleEditlicence}
                                 className="px-4 py-2 bg-blue-500 text-white rounded"
@@ -432,13 +515,15 @@ export default function TrackIdPage() {
                             </button>
                             {editinglicence && (
                                 <button
-                                    onClick={handleSavelicence}
+                                    onClick={handleSaveLicence}
                                     className="px-4 py-2 bg-green-500 text-white rounded"
                                 >
                                     Sauvegarder
                                 </button>
                             )}
                         </div>
+
+
                     </div>
                 ) : (
                     <p className="text-center text-gray-500">Chargement...</p>
