@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Header from "@/components/header";
+import { useRouter } from "next/navigation";
 
 export default function UploadTrack() {
   const [titre, setTitre] = useState<string>(""); // Titre
@@ -16,7 +17,8 @@ export default function UploadTrack() {
   const [userId, setUserId] = useState<string>(""); // ID utilisateur
   const [previewCover, setPreviewCover] = useState<string | null>(null); // Aperçu de l'image
   const [previewAudio, setPreviewAudio] = useState<string | null>(null); // Aperçu de l'audio
-
+  const [showCreationModal, setShowCreationModal] = useState<boolean>(false);
+  const router = useRouter(); // Initialisation du routeur
   // Récupérer l'id_user depuis le localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -43,7 +45,7 @@ export default function UploadTrack() {
     }
   };
 
-  
+
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -55,7 +57,7 @@ export default function UploadTrack() {
       setPreviewCover(URL.createObjectURL(file));
     }
   };
-  
+
   // Nettoyage des URLs temporaires pour éviter les fuites de mémoire
   useEffect(() => {
     return () => {
@@ -66,16 +68,16 @@ export default function UploadTrack() {
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-  
+
     // Vérifiez que tous les champs obligatoires sont remplis
     if (!titre || !bpm || !description || !cle || !genre || !type || !audioFile || !cover || !userId) {
       alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
-  
+
     // Obtenez la date d'aujourd'hui au format ISO (par exemple, "2024-11-25T12:34:56.789Z")
     const today = new Date().toISOString();
-  
+
     // Préparation des données track
     const trackData = {
       titre,
@@ -88,13 +90,13 @@ export default function UploadTrack() {
       statut: status,
       id_user: userId,
     };
-  
+
     // Création de l'objet FormData
     const formData = new FormData();
     formData.append("track", JSON.stringify(trackData)); // Ajout des données track sous forme de JSON
     formData.append("src", cover); // Ajout du fichier cover
     formData.append("audio", audioFile); // Ajout du fichier audio
-  
+
     try {
       // Envoi de la requête vers l'API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`, {
@@ -103,12 +105,14 @@ export default function UploadTrack() {
         body: formData,
       });
       console.log("Données envoyées :", JSON.stringify(trackData));
-  
+
       if (response.ok) {
         // Traitez la réponse si la requête a réussi
         const result = await response.json();
         console.log("Track créé avec succès :", result);
-        alert("Track créé avec succès !");
+        // Afficher le modal de confirmation
+        setShowCreationModal(true);
+
       } else {
         // Affichez un message d'erreur si la requête échoue
         const errorData = await response.text();
@@ -121,8 +125,7 @@ export default function UploadTrack() {
       alert("Une erreur s'est produite lors de la requête.");
     }
   };
-  
-  
+
 
   return (
     <>
@@ -275,6 +278,25 @@ export default function UploadTrack() {
             </button>
           </div>
         </form>
+        {showCreationModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Création réussie</h2>
+          <p className="text-gray-600 mb-6">
+            La piste <strong>{titre}</strong> a été créée avec succès !
+          </p>
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            onClick={() => {
+              setShowCreationModal(false);
+              router.push("/playlist"); // Redirection vers /playlist
+            }}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    )}
       </div>
     </>
   );
