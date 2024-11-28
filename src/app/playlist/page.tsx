@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import Header from "@/components/header";
+import PageError from "@/components/pageerror";
 import { faPause, faPlay, faTimes, faVolumeUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,13 +17,8 @@ interface Track {
   type: string;
   cle: string;
   id_user: string;
-  createdAt: string; // Ajout pour trier par date
-  user?: User; // Ajout pour inclure les informations utilisateur
-}
-
-interface User {
-  id_user: number;
-  pseudo: string;
+  createdAt: string;
+  user: string;
 }
 
 function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) {
@@ -50,7 +46,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
         <img src={track.cover} alt="Track cover" className="w-10 h-10 rounded-md" />
         <div className="ml-4 text-xs">
           <p className="font-semibold">{track.titre}</p>
-          <p className="text-gray-400">{track.user?.pseudo || "Auteur inconnu"}</p>
+          <p className="text-gray-400">{track.user}</p>
         </div>
       </div>
       <div className="flex items-center">
@@ -79,66 +75,50 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
 
 export default function TrackPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [filteredTracks, setFilteredTracks] = useState<Track[]>([]);
   const [visibleTracks, setVisibleTracks] = useState<Track[]>([]);
-  const [filters, setFilters] = useState({ type: "", genre: "", cle: "" });
-  const [uniqueTypes, setUniqueTypes] = useState<string[]>([]);
-  const [uniqueGenres, setUniqueGenres] = useState<string[]>([]);
-  const [uniqueKeys, setUniqueKeys] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
-
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(true); // Vérifie l'accès
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+
+      // Vérifier si le type d'utilisateur est "beatmaker"
+      if (parsedUser.type !== "beatmaker") {
+        setIsAuthorized(false); // Accès interdit
+      }
+    } else {
+      setIsAuthorized(false); // Non connecté
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthorized) return; // Ne pas exécuter si non autorisé
+
     const fetchTracks = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      const parsedUser = JSON.parse(storedUser);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/all/${parsedUser.id_user}`);
         const data: Track[] = await response.json();
-        // Récupérer les informations utilisateur pour chaque morceau
-        const tracksWithUsers = await Promise.all(
-          data.map(async (track) => {
-            const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${track.id_user}`);
-            const user: User = await userResponse.json();
-            return { ...track, user }; // Associe l'utilisateur au morceau
-          })
-        );
+        console.log(data);
 
-        const sortedTracks = [...tracksWithUsers].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const sortedTracks = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setTracks(sortedTracks);
-
-
-        const genreQuery = searchParams.get("genre") || "";
-        const filtered = genreQuery
-          ? sortedTracks.filter((track) => track.genre === genreQuery)
-          : sortedTracks;
-
-        setFilteredTracks(filtered);
-        setVisibleTracks(filtered.slice(0, 6));
-
-        const types = Array.from(new Set(data.map((track) => track.type))).sort();
-        const genres = Array.from(new Set(data.map((track) => track.genre))).sort();
-        const keys = Array.from(new Set(data.map((track) => track.cle))).sort();
-
-        setUniqueTypes(types);
-        setUniqueGenres(genres);
-        setUniqueKeys(keys);
-
-        setFilters((prevFilters) => ({ ...prevFilters, genre: genreQuery }));
+        setVisibleTracks(sortedTracks);
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
     };
 
-
-
     fetchTracks();
-
-  }, [searchParams]);
-
-
-
-
+  }, [isAuthorized]);
 
   const handlePlayTrack = (track: Track) => {
     if (activeTrack?.id_track !== track.id_track) {
@@ -149,6 +129,11 @@ export default function TrackPage() {
     }
   };
 
+  // Afficher la page d'erreur si non autorisé
+  if (!isAuthorized) {
+    return <PageError message="Vous devez être un beatmaker pour accéder à cette page." />;
+  }
+
   return (
     <>
       <Header />
@@ -156,7 +141,6 @@ export default function TrackPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {visibleTracks.map((track) => (
-
               <div
                 key={track.id_track}
                 className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 text-white"
@@ -177,14 +161,12 @@ export default function TrackPage() {
                   </button>
                 </div>
 
-
                 <a
                   href={`/playlist/${track.id_track}`}
                   className="bg-indigo-600 text-white w-full px-6 py-2 rounded-md hover:bg-indigo-500 flex items-center justify-center gap-2"
                 >
                   Modifier
                 </a>
-
               </div>
             ))}
           </div>
