@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Header from "@/components/header";
-
-
-
 export default function Example() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState([

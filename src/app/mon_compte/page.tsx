@@ -46,9 +46,7 @@ export default function MonCompte() {
     id_user: 0,
   });
 
-  const [activeSection, setActiveSection] = useState<"account" | "password" | "delete" | "commande" | "compte">(
-    "commande"
-  );
+  const [activeSection, setActiveSection] = useState<"account" | "password" | "delete" | "commande" | "compte">();
 
   useEffect(() => {
     if (activeSection === "commande") {
@@ -377,12 +375,6 @@ export default function MonCompte() {
               )}
             </div>
           )}
-
-
-
-
-
-
           {activeSection === "compte" && (
             <div>
               {isLoading ? (
@@ -401,26 +393,28 @@ export default function MonCompte() {
                   </thead>
                   <tbody>
                     {compte.length > 0 ? (
-                      compte.map((user) => (
-                        <tr key={user.id_user} className="border-b">
-                          <td className="px-4 py-2">{user.id_user}</td>
-                          <td className="px-4 py-2">{user.nom}</td>
-                          <td className="px-4 py-2">{user.prenom}</td>
-                          <td className="px-4 py-2">{user.email}</td>
-                          <td className="px-4 py-2">{user.type}</td>
-                          <td className="px-4 py-2">
-                            <button
-                              className="px-2 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setShowDeleteModal(true);
-                              }}
-                            >
-                              Supprimer
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      compte
+                        .filter((user) => user.type !== "admin") // Filtre les utilisateurs où type !== "admin"
+                        .map((user) => (
+                          <tr key={user.id_user} className="border-b">
+                            <td className="px-4 py-2">{user.id_user}</td>
+                            <td className="px-4 py-2">{user.nom}</td>
+                            <td className="px-4 py-2">{user.prenom}</td>
+                            <td className="px-4 py-2">{user.email}</td>
+                            <td className="px-4 py-2">{user.type}</td>
+                            <td className="px-4 py-2">
+                              <button
+                                className="px-2 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowDeleteModal(true);
+                                }}
+                              >
+                                Supprimer
+                              </button>
+                            </td>
+                          </tr>
+                        ))
                     ) : (
                       <tr>
                         <td colSpan={5} className="px-4 py-2 text-center">
@@ -428,6 +422,7 @@ export default function MonCompte() {
                         </td>
                       </tr>
                     )}
+
                   </tbody>
                 </table>
               )}
@@ -480,7 +475,7 @@ export default function MonCompte() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
-                  
+
                   { label: "Nom", value: "nom" },
                   { label: "Prénom", value: "prenom" },
                   { label: "Email", value: "email" },
