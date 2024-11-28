@@ -1,23 +1,57 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Header from '@/components/header'
+import { useState, useEffect } from "react";
+import Header from "@/components/header";
 
-const navigation = [
-  { name: 'Prods', href: '/prods' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Beatmakers', href: '/beatmakers' },
-  { name: 'Contact', href: '/contact' },
-]
 
-const stats = [
-  { label: 'Prods publiées', value: '12,000+' },
-  { label: 'Beatmakers inscrits', value: '4,500+' },
-  { label: 'Nouveaux utilisateurs mensuels', value: '1,200+' },
-]
 
 export default function Example() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [stats, setStats] = useState([
+    { label: "Prods publiées", value: "..." },
+    { label: "Beatmakers inscrits", value: "..." },
+  ]);
+
+  // Fonction pour récupérer le nombre de tracks
+  const fetchTrackCount = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
+      if (!response.ok) throw new Error("Erreur lors de la récupération des tracks");
+      const tracks = await response.json();
+      return tracks.length; // Compte le nombre total de tracks
+    } catch (error) {
+      console.error("Erreur lors de la récupération des tracks :", error);
+      return 0;
+    }
+  };
+
+  // Fonction pour récupérer le nombre de beatmakers (type !== "admin")
+  const fetchBeatmakerCount = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`);
+      if (!response.ok) throw new Error("Erreur lors de la récupération des utilisateurs");
+      const users = await response.json();
+      return users.filter((user: { type: string }) => user.type !== "admin").length; // Filtre les admins
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs :", error);
+      return 0;
+    }
+  };
+
+  // Récupère les statistiques au chargement du composant
+  useEffect(() => {
+    const fetchStats = async () => {
+      const trackCount = await fetchTrackCount();
+      const beatmakerCount = await fetchBeatmakerCount();
+
+      setStats([
+        { label: "Prods publiées", value: trackCount.toString() },
+        { label: "Beatmakers inscrits", value: beatmakerCount.toString() },
+      ]);
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <div className="bg-white">
@@ -35,7 +69,8 @@ export default function Example() {
                     Découvrez et créez les meilleurs beats
                   </h1>
                   <p className="mt-8 text-lg text-gray-500 sm:max-w-md sm:text-xl lg:max-w-none">
-                    Rejoignez notre communauté de beatmakers passionnés, publiez vos prods et collaborez avec les meilleurs talents.
+                    Rejoignez notre communauté de beatmakers passionnés, publiez vos prods et collaborez avec les
+                    meilleurs talents.
                   </p>
                 </div>
 
@@ -71,5 +106,5 @@ export default function Example() {
         </div>
       </main>
     </div>
-  )
+  );
 }
