@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Dialog,
-  DialogPanel,
-  Disclosure,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-} from '@headlessui/react';
+import { Dialog, DialogPanel, Disclosure, Menu, MenuButton, MenuItem, MenuItems, Popover, PopoverButton, PopoverPanel, } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingBagIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { TrashIcon } from '@heroicons/react/24/outline';
@@ -47,6 +36,70 @@ export default function Header() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showPlaylistButton, setShowPlaylistButton] = useState(true);
 
+
+  useEffect(() => {
+    // Récupère les informations de l'utilisateur depuis le localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        // Tente de convertir les données JSON en un objet utilisateur
+        const parsedUser: User = JSON.parse(storedUser);
+        // Met à jour l'état de l'utilisateur avec les données récupérées
+        setUser(parsedUser);
+        // Indique que l'utilisateur est authentifié
+        setIsAuthenticated(true);
+
+        // Si l'utilisateur possède un identifiant, vérifie l'état de sa playlist
+        if (parsedUser.id_user) {
+          fetchPlaylistStatus(parsedUser.id_user); // Fonction pour appeler l'API
+        }
+      } catch {
+        // Si une erreur survient (ex : JSON invalide), désauthentifie l'utilisateur
+        setIsAuthenticated(false);
+      }
+    }
+    // Récupère les informations du panier depuis le localStorage
+    const cart = localStorage.getItem('cart');
+    if (cart) {
+      try {
+        // Tente de convertir les données JSON en un tableau d'éléments de panier
+        const parsedCart: CartItem[] = JSON.parse(cart);
+        // Met à jour l'état avec les éléments du panier récupérés
+        setCartItems(parsedCart);
+      } catch {
+        // Si une erreur survient (ex : JSON invalide), initialise un panier vide
+        setCartItems([]);
+      }
+    }
+  }, []); // Le tableau vide indique que cet effet s'exécute uniquement au montage du composant
+
+
+  const handleSignOut = async () => {
+    try {
+      // Appeler l'API backend pour effectuer la déconnexion
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
+        method: 'POST', // Méthode POST est souvent utilisée pour /logout
+        credentials: 'include', // Inclure les cookies dans la requête
+      });
+
+      // Vérification de la réponse
+      if (!response.ok) {
+        throw new Error(`Erreur lors de la déconnexion : ${response.statusText}`);
+      }
+
+      // Nettoyer les données côté client
+      localStorage.removeItem('user');
+      localStorage.removeItem('id_user');
+      setIsAuthenticated(false);
+      setUser(null);
+
+      // Rediriger vers la page d'accueil
+      window.location.assign('/');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion :', error);
+    }
+  };
+
   // Fonction pour vérifier l'existence de la playlist
   const fetchPlaylistStatus = async (userId: number) => {
     try {
@@ -65,60 +118,6 @@ export default function Header() {
     }
   };
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-
-        // Appel API pour vérifier la playlist
-        if (parsedUser.id_user) {
-          fetchPlaylistStatus(parsedUser.id_user);
-        }
-      } catch {
-        setIsAuthenticated(false);
-      }
-    }
-
-    const cart = localStorage.getItem('cart');
-    if (cart) {
-      try {
-        const parsedCart: CartItem[] = JSON.parse(cart);
-        setCartItems(parsedCart);
-      } catch {
-        setCartItems([]);
-      }
-    }
-  }, []);
-
-  const handleSignOut = async () => {
-    try {
-        // Appeler l'API backend pour effectuer la déconnexion
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
-            method: 'POST', // Méthode POST est souvent utilisée pour /logout
-            credentials: 'include', // Inclure les cookies dans la requête
-        });
-
-        // Vérification de la réponse
-        if (!response.ok) {
-            throw new Error(`Erreur lors de la déconnexion : ${response.statusText}`);
-        }
-
-        // Nettoyer les données côté client
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setUser(null);
-
-        // Rediriger vers la page d'accueil
-        window.location.assign('/');
-    } catch (error) {
-        console.error('Erreur lors de la déconnexion :', error);
-    }
-};
-
-  
   const handleRemoveItem = (id: number) => {
     const updatedCart = cartItems.filter((item) => item.id_track !== id);
     setCartItems(updatedCart);
@@ -148,18 +147,24 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Navigation pour les écrans de bureau */}
         <Popover className="hidden lg:flex lg:gap-x-12">
+          {/* Lien vers la page "Track" */}
           <Link href="/track" className="text-sm font-semibold text-gray-900">
             Track
           </Link>
+
+          {/* Lien vers la page "Prix" */}
           <Link href="/pricing" className="text-sm font-semibold text-gray-900">
             Prix
           </Link>
+
+          {/* Lien vers la page "À propos" */}
           <Link href="/about" className="text-sm font-semibold text-gray-900">
             A propos
           </Link>
         </Popover>
+
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
           {/* Panier avec menu déroulant */}
@@ -230,22 +235,27 @@ export default function Header() {
                 className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 z-50"
               >
                 <MenuItem>
+                  {/* Conteneur pour afficher les informations utilisateur */}
                   <div className="flex items-center justify-center px-4 py-2 text-sm font-bold">
+                    {/* Affiche le pseudo de l'utilisateur avec une couleur conditionnelle en fonction de son type */}
                     <span className={user?.type === "admin" ? "text-yellow-500" : "text-gray-700"}>
-                      {user?.pseudo}
+                      {user?.pseudo} {/* Pseudo de l'utilisateur (s'il existe) */}
                     </span>
+                    {/* Si l'utilisateur est un administrateur, affiche une icône de couronne */}
                     {user?.type === "admin" && (
                       <img
                         src="https://png.pngtree.com/png-vector/20190128/ourlarge/pngtree-king-crown-for-symbol-and-icon-king-png-image_342262.jpg"
-                        alt="Crown Icon"
-                        className="h-4 w-4 ml-2"
+                        alt="Crown Icon" // Texte alternatif pour l'image
+                        className="h-4 w-4 ml-2" // Taille de l'image et espacement à gauche
                       />
                     )}
+                    {/* Si l'utilisateur est un beatmaker, affiche une icône de note de musique */}
                     {user?.type === "beatmaker" && (
-                      <MusicalNoteIcon className="h-4 w-4 text-blue-500 ml-2" />
+                      <MusicalNoteIcon className="h-4 w-4 text-blue-500 ml-2" /> // Taille et couleur de l'icône
                     )}
                   </div>
                 </MenuItem>
+
 
                 <MenuItem>
                   <Link

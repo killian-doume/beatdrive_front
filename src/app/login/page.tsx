@@ -10,53 +10,55 @@ export default function Login() {
   const router = useRouter();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
+    // Empêche le comportement par défaut du formulaire (soumission et rechargement de la page)
     e.preventDefault();
-
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account`, {
-        method: "POST",
-        headers: {
-          "X-Requested-With":"XMLHttpRequest",
-          "Content-Type": "application/json",
-          "Authorization": "Basic " + btoa(email + ':' + password)
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Connexion réussie :", data);
-        localStorage.setItem('id_user', data.id_user || ''); 
-    
-        // Filtrer les données nécessaires
-        const filteredData = {
-            adresse_facturation: data.adresse_facturation || null,
-            adresse_livraison: data.adresse_livraison || null,
-            avatar: data.avatar,
-            email: data.email,
-            id_user: data.id_user,
-            nom: data.nom,
-            prenom: data.prenom,
-            pseudo: data.pseudo,
-            telephone: data.telephone,
-            type: data.type,
-            username: data.username,
-        };
-    
-        // Stocker les données utilisateur filtrées dans le Local Storage
-        localStorage.setItem("user", JSON.stringify(filteredData));
-    
-        // Rediriger vers la page d'accueil
-        router.push("/");
-    }
-     else {
-        const errorData = await response.json();
-        console.log("Erreur lors de la connexion :", errorData.message || "Échec de la connexion.");
-      }
+        // Effectue une requête POST vers l'API pour tenter une connexion
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account`, {
+            method: "POST", // Méthode HTTP pour envoyer des données
+            headers: {
+                "X-Requested-With": "XMLHttpRequest", // Indique que la requête est faite par JavaScript
+                "Content-Type": "application/json", // Type des données envoyées : JSON
+                "Authorization": "Basic " + btoa(email + ':' + password) // Encode l'email et le mot de passe en Base64 pour l'authentification
+            },
+            credentials: 'include' // Inclut les cookies ou informations d'identité dans la requête
+        });
+        // Vérifie si la requête a réussi
+        if (response.ok) {
+            // Convertit la réponse JSON en un objet JavaScript
+            const data = await response.json();
+            console.log("Connexion réussie :", data);
+            // Stocke l'identifiant utilisateur (id_user) dans le Local Storage
+            localStorage.setItem('id_user', data.id_user || ''); 
+            // Filtre les données utilisateur nécessaires
+            const filteredData = {
+                adresse_facturation: data.adresse_facturation || null, // Adresse de facturation (si disponible)
+                adresse_livraison: data.adresse_livraison || null, // Adresse de livraison (si disponible)
+                avatar: data.avatar, // URL de l'avatar de l'utilisateur
+                email: data.email, // Adresse email
+                id_user: data.id_user, // Identifiant utilisateur
+                nom: data.nom, // Nom
+                prenom: data.prenom, // Prénom
+                pseudo: data.pseudo, // Pseudo
+                telephone: data.telephone, // Numéro de téléphone
+                type: data.type, // Type d'utilisateur (ex. admin, utilisateur normal, etc.)
+                username: data.username // Nom d'utilisateur
+            };
+            // Stocke les données utilisateur filtrées dans le Local Storage sous forme de chaîne JSON
+            localStorage.setItem("user", JSON.stringify(filteredData));
+            // Redirige l'utilisateur vers la page d'accueil après une connexion réussie
+            router.push("/");
+        } else {
+            // Si la requête échoue, récupère les détails de l'erreur
+            const errorData = await response.json();
+            console.log("Erreur lors de la connexion :", errorData.message || "Échec de la connexion.");
+        }
     } catch (err) {
-      console.error("Erreur lors de la requête :", err);
+        // Capture et affiche toute erreur survenue lors de la requête
+        console.error("Erreur lors de la requête :", err);
     }
-  };
+};
+
 
 
   return (

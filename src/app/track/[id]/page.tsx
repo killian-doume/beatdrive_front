@@ -38,56 +38,63 @@ export interface LicenceTrack {
 export default function TrackIdPage() {
     const { id } = useParams();
     const [track, setTrack] = useState<Track | null>(null);
-    const [user, setUser] = useState<User | null>(null); // Ajouté pour stocker les données utilisateur
+    const [user, setUser] = useState<User | null>(null); 
     const [licenceTrack, setLicenceTrack] = useState<LicenceTrack[]>([]);
     const [notification, setNotification] = useState<string | null>(null);
 
     useEffect(() => {
         if (!id) return;
-
         const fetchTrackById = async () => {
             try {
-                // Récupération du morceau
+                // Récupération des informations du morceau (track) depuis l'API
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/track/${id}`
                 );
+                // Vérifie si la réponse est correcte (statut HTTP 2xx)
                 if (!response.ok) {
                     console.error("Erreur lors de la récupération du morceau:", response.statusText);
                     return; // Stop la fonction en cas d'erreur
                 }
+                // Convertit les données du morceau en objet de type Track
                 const trackData: Track = await response.json();
+                // Met à jour l'état avec les données du morceau
                 setTrack(trackData);
-        
-                // Récupération de l'utilisateur associé
+                // Récupération des informations de l'utilisateur associé au morceau
                 const userResponse = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/user/${trackData.id_user}`
                 );
+                // Vérifie si la réponse utilisateur est correcte
                 if (!userResponse.ok) {
                     console.error("Erreur lors de la récupération de l'utilisateur:", userResponse.statusText);
                     return; // Stop la fonction en cas d'erreur
                 }
+                // Convertit les données de l'utilisateur en objet de type User
                 const userData: User = await userResponse.json();
+                // Met à jour l'état avec les données de l'utilisateur
                 setUser(userData);
-        
                 // Récupération des licences associées au morceau
                 const licenceResponse = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/licence_track/${trackData.id_track}`
                 );
+                // Vérifie si la réponse des licences est correcte
                 if (!licenceResponse.ok) {
                     console.log("Erreur lors de la récupération des licences:", licenceResponse.statusText);
                     return; // Stop la fonction en cas d'erreur
                 }
+                // Convertit les données des licences en tableau d'objets de type LicenceTrack
                 const licences: LicenceTrack[] = await licenceResponse.json();
+                // Met à jour l'état avec les licences associées au morceau
                 setLicenceTrack(licences);
             } catch (error) {
+                // Capture et affiche toute erreur inattendue (par exemple, problème réseau)
                 console.error("Erreur inattendue:", error);
             }
         };
-        
-
+    
+        // Appelle la fonction pour récupérer les données
         fetchTrackById();
-    }, [id]);
-
+    }, [id]); // Déclenche l'effet lorsque l'ID change
+    
     const handleAddLicenceToCart = (licence: LicenceTrack) => {
         if (!track) return;
 
