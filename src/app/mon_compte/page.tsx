@@ -29,6 +29,9 @@ export default function MonCompte() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [previewAvatar, setPreviewAvatar] = useState<string | null>(null); // Aperçu de l'avatar
   const [avatarFile, setAvatarFile] = useState<File | null>(null); // Fichier avatar
+  const [compte, setcompte] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [user, setUser] = useState<User>({
     nom: "",
     prenom: "",
@@ -43,7 +46,7 @@ export default function MonCompte() {
     id_user: 0,
   });
 
-  const [activeSection, setActiveSection] = useState<"account" | "password" | "delete" | "commande">(
+  const [activeSection, setActiveSection] = useState<"account" | "password" | "delete" | "commande" | "compte">(
     "commande"
   );
 
@@ -114,6 +117,50 @@ export default function MonCompte() {
       setIsLoading(false);
     }
   };
+
+
+
+  // Récupération des utilisateurs pour la gestion des comptes
+  const fetchCompte = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`);
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des utilisateurs");
+      }
+      const data: User[] = await response.json();
+      setcompte(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des comptes :", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Suppression d'un utilisateur via API
+  const deleteUser = async (id_user: number) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${id_user}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression de l'utilisateur");
+      }
+      alert("Utilisateur supprimé avec succès !");
+      setcompte((prevUsers) => prevUsers.filter((user) => user.id_user !== id_user));
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
+  // Activer la gestion des comptes
+  useEffect(() => {
+    if (activeSection === "compte") {
+      fetchCompte();
+    }
+  }, [activeSection]);
+
 
   const handleInputChange = (field: keyof User, value: string) => {
     setUser({ ...user, [field]: value });
@@ -256,33 +303,39 @@ export default function MonCompte() {
 
           <div className="flex justify-between gap-2 mb-8">
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${
-                activeSection === "commande" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
-              }`}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "commande" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
               onClick={() => setActiveSection("commande")}
             >
               Historique de commande
             </button>
+            {user.type === "admin" && (
+              <button
+                className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "compte" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                  }`}
+                onClick={() => setActiveSection("compte")}
+              >
+                Gestion des comptes
+              </button>
+            )}
+
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${
-                activeSection === "account" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
-              }`}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "account" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
               onClick={() => setActiveSection("account")}
             >
               Compte
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${
-                activeSection === "password" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
-              }`}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "password" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
               onClick={() => setActiveSection("password")}
             >
               Mot de passe
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${
-                activeSection === "delete" ? "bg-red-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
-              }`}
+              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "delete" ? "bg-red-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
               onClick={() => setActiveSection("delete")}
             >
               Supprimer compte
@@ -325,6 +378,87 @@ export default function MonCompte() {
             </div>
           )}
 
+
+
+
+
+
+          {activeSection === "compte" && (
+            <div>
+              {isLoading ? (
+                <p>Chargement...</p>
+              ) : (
+                <table className="table-auto w-full bg-white shadow rounded-md">
+                  <thead>
+                    <tr className="bg-gray-200 text-left">
+                      <th className="px-4 py-2">Nom</th>
+                      <th className="px-4 py-2">Nom</th>
+                      <th className="px-4 py-2">Prénom</th>
+                      <th className="px-4 py-2">Email</th>
+                      <th className="px-4 py-2">Type</th>
+                      <th className="px-4 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compte.length > 0 ? (
+                      compte.map((user) => (
+                        <tr key={user.id_user} className="border-b">
+                          <td className="px-4 py-2">{user.id_user}</td>
+                          <td className="px-4 py-2">{user.nom}</td>
+                          <td className="px-4 py-2">{user.prenom}</td>
+                          <td className="px-4 py-2">{user.email}</td>
+                          <td className="px-4 py-2">{user.type}</td>
+                          <td className="px-4 py-2">
+                            <button
+                              className="px-2 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setShowDeleteModal(true);
+                              }}
+                            >
+                              Supprimer
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-2 text-center">
+                          Aucun utilisateur trouvé.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+
+          {/* Modal de confirmation */}
+          {showDeleteModal && selectedUser && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white p-6 rounded-md shadow-md">
+                <h2 className="text-lg font-semibold mb-4">Confirmation de suppression</h2>
+                <p>Êtes-vous sûr de vouloir supprimer l'utilisateur {selectedUser.nom} {selectedUser.prenom} ?</p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400"
+                    onClick={() => setShowDeleteModal(false)}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                    onClick={() => deleteUser(selectedUser.id_user)}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeSection === "account" && (
             <form className="space-y-6" onSubmit={handleSaveChanges}>
               <div className="mb-6 flex items-center gap-6">
@@ -346,6 +480,7 @@ export default function MonCompte() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
+                  
                   { label: "Nom", value: "nom" },
                   { label: "Prénom", value: "prenom" },
                   { label: "Email", value: "email" },
