@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/header";
@@ -60,6 +59,7 @@ function AudioPlayer({ track, onClose }: { track: Track; onClose: () => void }) 
         <div className="ml-4 text-xs">
           <p className="font-semibold">{track.titre}</p>
           <p className="text-gray-400">{track.user?.pseudo || "Auteur inconnu"}</p>
+          <p className="text-gray-400">{track.genre}</p>
         </div>
       </div>
       <div className="flex items-center">
@@ -98,38 +98,37 @@ export default function TrackPage() {
   const [uniqueKeys, setUniqueKeys] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchTracks = async () => {
       try {
-        // Effectue une requête à l'API pour récupérer tous les tracks
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track`);
-        // Convertit la réponse en un tableau de tracks
         const data: Track[] = await response.json();
-        // Récupère les informations utilisateur associées à chaque track
+
         const tracksWithUsers = await Promise.all(
-          // Parcourt chaque track récupéré
           data.map(async (track) => {
-            // Effectue une requête pour récupérer les informations de l'utilisateur lié à ce track
             const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${track.id_user}`);
-            // Convertit la réponse en un objet utilisateur
             const user: User = await userResponse.json();
-            // Retourne un nouvel objet track incluant les informations de l'utilisateur
-            return { ...track, user }; // Combine les données du track et de l'utilisateur
+            return { ...track, user };
           })
         );
-
 
         const sortedTracks = [...tracksWithUsers].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setTracks(sortedTracks);
 
+        const genreQuery = searchParams.get("genre")?.toLowerCase() || "";
+        const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
-        const genreQuery = searchParams.get("genre") || "";
-        const filtered = genreQuery
-          ? sortedTracks.filter((track) => track.genre === genreQuery)
-          : sortedTracks;
+        const filtered = sortedTracks.filter((track) => {
+          const matchesGenre = genreQuery === "" || track.genre.toLowerCase() === genreQuery;
+          const matchesSearch =
+            searchQuery === "" ||
+            track.titre.toLowerCase().includes(searchQuery) ||
+            track.user?.pseudo.toLowerCase().includes(searchQuery) ||
+            track.genre.toLowerCase().includes(searchQuery);
+          return matchesGenre && matchesSearch;
+        });
 
         setFilteredTracks(filtered);
         setVisibleTracks(filtered.slice(0, 6));
@@ -142,24 +141,23 @@ export default function TrackPage() {
         setUniqueGenres(genres);
         setUniqueKeys(keys);
 
-        setFilters((prevFilters) => ({ ...prevFilters, genre: genreQuery }));
+        setFilters((prevFilters) => ({
+          ...prevFilters,
+          genre: genreQuery, 
+        }));
       } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
       }
     };
 
-    // Fonction asynchrone pour récupérer les prix des licences
     const fetchPrices = async () => {
       try {
-        // Envoi d'une requête GET vers l'API pour récupérer les licences de pistes
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/licence_track`);
         const data: LicenceTrack[] = await response.json();
-        // Initialisation d'un objet vide pour mapper les prix des pistes en fonction de leur ID
         const priceMapping: { [id_track: number]: string } = {};
-        // Parcours du tableau des licences pour extraire les prix des licences "Non-exclusive"
         data.forEach((licence) => {
-          if (licence.type === "Non-exclusive") { // Filtrer uniquement les licences de type "Non-exclusive"
-            priceMapping[licence.track.id_track] = licence.prix; // Associer l'ID de la piste au prix correspondant
+          if (licence.type === "Non-exclusive") {
+            priceMapping[licence.track.id_track] = licence.prix;
           }
         });
         setPrices(priceMapping);
@@ -167,7 +165,6 @@ export default function TrackPage() {
         console.error("Erreur lors de la récupération des prix des licences :", error);
       }
     };
-
 
     fetchTracks();
     fetchPrices();
@@ -216,11 +213,9 @@ export default function TrackPage() {
       setNotification(`"${track.titre}" avec la licence "${licenceType}" est déjà dans votre panier.`);
       setTimeout(() => {
         setNotification(null);
-        window.location.reload(); // Recharge la page après 3 secondes
       }, 3000);
       return;
     }
-
 
     const cartItem = {
       id_track: track.id_track,
@@ -238,7 +233,6 @@ export default function TrackPage() {
     setNotification(`"${track.titre}" avec la licence "${licenceType}" a été ajouté au panier.`);
     setTimeout(() => {
       setNotification(null);
-      window.location.reload(); // Recharge la page après 3 secondes
     }, 3000);
   };
 

@@ -152,37 +152,73 @@ export default function UploadTrack() {
             </div>
             <div>
               <label className="block text-black font-medium mb-2">BPM:</label>
-              <input
-                type="text"
-                value={bpm}
-                onChange={(e) => setBpm(e.target.value)}
-                placeholder="Entrez le BPM"
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
-                required
-              />
+              <div className="flex items-center">
+                <input
+                  type="range"
+                  min="40"
+                  max="240"
+                  value={bpm}
+                  onChange={(e) => setBpm(e.target.value)}
+                  className="w-full"
+                />
+                <span className="ml-4 text-black font-medium">{bpm} BPM</span>
+              </div>
             </div>
+
             <div>
               <label className="block text-black font-medium mb-2">Genre:</label>
-              <input
-                type="text"
+              <select
                 value={genre}
                 onChange={(e) => setGenre(e.target.value)}
-                placeholder="Entrez le genre"
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 required
-              />
+              >
+                <option value="">Sélectionnez un genre musical</option>
+                <option value="Rap">Rap</option>
+                <option value="Pop">Pop</option>
+                <option value="Reggae">Reggae</option>
+                <option value="Electro">Electro</option>
+                <option value="Rock">Rock</option>
+                <option value="Classique">Classique</option>
+                <option value="Jazz">Jazz</option>
+                <option value="Blues">Blues</option>
+                <option value="R&B">R&B</option>
+                <option value="Soul">Soul</option>
+                <option value="Folk">Folk</option>
+                <option value="Country">Country</option>
+                <option value="Métal">Métal</option>
+                <option value="Funk">Funk</option>
+                <option value="Disco">Disco</option>
+              </select>
             </div>
+
             <div>
               <label className="block text-black font-medium mb-2">Type:</label>
-              <input
-                type="text"
+              <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                placeholder="Entrez le type"
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
                 required
-              />
+              >
+                <option value="">Sélectionnez un type d'instrument</option>
+                <option value="Piano">Piano</option>
+                <option value="Synthé">Synthé</option>
+                <option value="Batterie">Batterie</option>
+                <option value="Guitare acoustique">Guitare acoustique</option>
+                <option value="Guitare électrique">Guitare électrique</option>
+                <option value="Basse">Basse</option>
+                <option value="Violon">Violon</option>
+                <option value="Violoncelle">Violoncelle</option>
+                <option value="Saxophone">Saxophone</option>
+                <option value="Trompette">Trompette</option>
+                <option value="Flûte">Flûte</option>
+                <option value="Harmonica">Harmonica</option>
+                <option value="Percussions">Percussions</option>
+                <option value="Clarinette">Clarinette</option>
+                <option value="Cor">Cor</option>
+              </select>
             </div>
+
             <div>
               <label className="block text-black font-medium mb-2">Clé musicale:</label>
               <select
@@ -206,6 +242,7 @@ export default function UploadTrack() {
                 <option value="B">B</option>
               </select>
             </div>
+
             <div>
               <label className="block text-black font-medium mb-2">Statut:</label>
               <select
@@ -279,24 +316,24 @@ export default function UploadTrack() {
           </div>
         </form>
         {showCreationModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg p-6 w-80">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Création réussie</h2>
-          <p className="text-gray-600 mb-6">
-            La piste <strong>{titre}</strong> a été créée avec succès !
-          </p>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            onClick={() => {
-              setShowCreationModal(false);
-              router.push("/playlist"); // Redirection vers /playlist
-            }}
-          >
-            OK
-          </button>
-        </div>
-      </div>
-    )}
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+              <h2 className="text-lg font-bold text-gray-800 mb-4">Création réussie</h2>
+              <p className="text-gray-600 mb-6">
+                La piste <strong>{titre}</strong> a été créée avec succès !
+              </p>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                onClick={() => {
+                  setShowCreationModal(false);
+                  router.push("/playlist"); // Redirection vers /playlist
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
