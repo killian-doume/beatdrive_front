@@ -1,10 +1,8 @@
 "use client";
-
 import Header from "@/components/header";
 import PageError from "@/components/pageerror";
 import { faPause, faPlay, faTimes, faVolumeUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Track {
@@ -78,8 +76,7 @@ export default function TrackPage() {
   const [visibleTracks, setVisibleTracks] = useState<Track[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true); // Vérifie l'accès
-  const router = useRouter();
-  const searchParams = useSearchParams();
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

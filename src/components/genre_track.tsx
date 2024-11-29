@@ -7,31 +7,31 @@ export default function GenreTrack() {
       id: 1,
       name: "Rap",
       image:
-        "https://img.freepik.com/vecteurs-premium/silhouette-du-raphop-gens-dans-graffiti-tag-hip-hop-art-rue-illustration-typographie_894890-1154.jpg",
+        "https://i.scdn.co/image/ab67706f000000025433afbc5f6fc1083d6645f2",
     },
     {
       id: 2,
       name: "Rock",
       image:
-        "https://img.freepik.com/vecteurs-libre/concept-geste-rock-monochrome-vintage_225004-1211.jpg?t=st=1731928476~exp=1731932076~hmac=2c8475d3e8e2848d6835365aeadafa46d855eb6e7445f71b3b3dc522c8a6afe5&w=360",
+        "https://i.scdn.co/image/ab67706f00000002095de10bab2eeac5e434854a",
     },
     {
       id: 3,
       name: "Pop",
       image:
-        "https://www.shutterstock.com/shutterstock/photos/515538502/display_1500/stock-vector-pop-music-text-art-colorful-calligraphy-happy-illustration-funny-notes-and-vynil-music-sound-515538502.jpg",
+        "https://i.scdn.co/image/ab67706f00000002b99da04cd92019d599e01926",
     },
     {
       id: 4,
       name: "Reggae",
       image:
-        "https://www.shutterstock.com/shutterstock/photos/627314249/display_1500/stock-vector-vector-illustration-on-the-theme-of-reggae-music-slogan-just-relax-and-feel-reggae-grunge-627314249.jpg",
+        "https://i.scdn.co/image/ab67706f00000002c61c26186a65f8c63104e913",
     },
     {
       id: 5,
       name: "Electro",
       image:
-        "https://www.shutterstock.com/shutterstock/photos/2045122157/display_1500/stock-vector-illustration-of-dj-electro-music-2045122157.jpg",
+        "https://i.scdn.co/image/ab67706f00000002289ac8365eac54aed4608cf2",
     },
   ];
 

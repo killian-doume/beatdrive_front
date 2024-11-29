@@ -299,9 +299,11 @@ export default function MonCompte() {
         <div className="max-w-4xl mx-auto py-10 px-6">
           <h1 className="text-2xl font-semibold mb-8">Paramètres du compte</h1>
 
-          <div className="flex justify-between gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-8">
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "commande" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              className={`flex-1 min-w-[120px] px-4 py-2 rounded-md text-center ${activeSection === "commande"
+                  ? "bg-indigo-500 text-white"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
               onClick={() => setActiveSection("commande")}
             >
@@ -309,30 +311,37 @@ export default function MonCompte() {
             </button>
             {user.type === "admin" && (
               <button
-                className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "compte" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+                className={`flex-1 min-w-[120px] px-4 py-2 rounded-md text-center ${activeSection === "compte"
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-200 text-black hover:bg-gray-300"
                   }`}
                 onClick={() => setActiveSection("compte")}
               >
                 Gestion des comptes
               </button>
             )}
-
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "account" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              className={`flex-1 min-w-[120px] px-4 py-2 rounded-md text-center ${activeSection === "account"
+                  ? "bg-indigo-500 text-white"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
               onClick={() => setActiveSection("account")}
             >
               Compte
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "password" ? "bg-indigo-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              className={`flex-1 min-w-[120px] px-4 py-2 rounded-md text-center ${activeSection === "password"
+                  ? "bg-indigo-500 text-white"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
               onClick={() => setActiveSection("password")}
             >
               Mot de passe
             </button>
             <button
-              className={`flex-1 px-2 py-1 rounded-md text-center ${activeSection === "delete" ? "bg-red-500 text-white" : "bg-gray-200 text-black hover:bg-gray-300"
+              className={`flex-1 min-w-[120px] px-4 py-2 rounded-md text-center ${activeSection === "delete"
+                 ? "bg-indigo-500 text-white"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
               onClick={() => setActiveSection("delete")}
             >
@@ -376,14 +385,14 @@ export default function MonCompte() {
             </div>
           )}
           {activeSection === "compte" && (
-            <div>
+            <div className="overflow-x-auto">
               {isLoading ? (
-                <p>Chargement...</p>
+                <p className="text-center text-gray-500">Chargement...</p>
               ) : (
-                <table className="table-auto w-full bg-white shadow rounded-md">
+                <table className="table-auto w-full bg-white shadow-md rounded-md">
                   <thead>
-                    <tr className="bg-gray-200 text-left">
-                      <th className="px-4 py-2">Nom</th>
+                    <tr className="bg-gray-200 text-left text-sm md:text-base">
+                      <th className="px-4 py-2">ID</th>
                       <th className="px-4 py-2">Nom</th>
                       <th className="px-4 py-2">Prénom</th>
                       <th className="px-4 py-2">Email</th>
@@ -396,7 +405,7 @@ export default function MonCompte() {
                       compte
                         .filter((user) => user.type !== "admin") // Filtre les utilisateurs où type !== "admin"
                         .map((user) => (
-                          <tr key={user.id_user} className="border-b">
+                          <tr key={user.id_user} className="border-b hover:bg-gray-50 text-sm md:text-base">
                             <td className="px-4 py-2">{user.id_user}</td>
                             <td className="px-4 py-2">{user.nom}</td>
                             <td className="px-4 py-2">{user.prenom}</td>
@@ -404,7 +413,7 @@ export default function MonCompte() {
                             <td className="px-4 py-2">{user.type}</td>
                             <td className="px-4 py-2">
                               <button
-                                className="px-2 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                className="px-2 py-1 text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
                                 onClick={() => {
                                   setSelectedUser(user);
                                   setShowDeleteModal(true);
@@ -417,17 +426,17 @@ export default function MonCompte() {
                         ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-4 py-2 text-center">
+                        <td colSpan={6} className="px-4 py-2 text-center text-gray-500">
                           Aucun utilisateur trouvé.
                         </td>
                       </tr>
                     )}
-
                   </tbody>
                 </table>
               )}
             </div>
           )}
+
 
 
           {/* Modal de confirmation */}

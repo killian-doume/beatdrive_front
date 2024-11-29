@@ -87,7 +87,6 @@ export default function TrackIdPage() {
 
         fetchTrackById();
     }, [id]);
-
     const handleEdittrack = () => {
         setEditingtrack(!editingtrack);
     };
@@ -100,7 +99,6 @@ export default function TrackIdPage() {
             setEditedTrack({ ...editedTrack, [field]: value });
         }
     };
-
     const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -112,7 +110,6 @@ export default function TrackIdPage() {
             setPreviewCover(URL.createObjectURL(file));
         }
     };
-
     const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -125,23 +122,18 @@ export default function TrackIdPage() {
         }
     };
 
-
     const handleSaveTrack = async () => {
         if (!editedTrack) return;
-
         const formData = new FormData();
         formData.append("track", JSON.stringify(editedTrack));
-
         if (previewCover) {
             const coverBlob = await fetch(previewCover).then((res) => res.blob());
             formData.append("cover", coverBlob, "cover.jpg");
         }
-
         if (previewAudio) {
             const audioBlob = await fetch(previewAudio).then((res) => res.blob());
             formData.append("audio", audioBlob, "audio.mp3");
         }
-
         try {
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/track/${id}`,
@@ -150,7 +142,6 @@ export default function TrackIdPage() {
                     body: formData,
                 }
             );
-
             if (response.ok) {
                 const updatedTrack = await response.json();
                 setTrack(updatedTrack);
@@ -170,7 +161,6 @@ export default function TrackIdPage() {
             console.error("Erreur inattendue :", error);
         }
     };
-
     const handleSaveLicence = async () => {
         try {
             // Gestion des PUT pour les licences existantes
@@ -188,16 +178,12 @@ export default function TrackIdPage() {
                     console.error("Erreur lors de la mise à jour de la licence :", response.statusText);
                 }
             }
-
-         
-
             setNotification("Licences mises à jour avec succès !");
             setTimeout(() => setNotification(null), 3000);
         } catch (error) {
             console.error("Erreur inattendue lors de la mise à jour des licences :", error);
         }
     };
-
 
     const handleSavetrack = () => {
         handleSaveTrack();
@@ -207,26 +193,25 @@ export default function TrackIdPage() {
         handleSaveLicence();
     };
 
-    
     const postNewLicence = async () => {
         if (!track) {
             console.error("Le track n'est pas disponible");
             return;
         }
-    
+
         try {
             const newLicence = {
                 track, // Inclut l'objet Track complet
                 type: "", // Valeur par défaut pour le type
                 prix: "", // Valeur par défaut pour le prix
             };
-    
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/licence_track`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newLicence),
             });
-    
+
             if (response.ok) {
                 const createdLicence = await response.json();
                 setLicenceTrack((prevLicences) => [...prevLicences, createdLicence]);
@@ -243,8 +228,6 @@ export default function TrackIdPage() {
             console.error("Erreur inattendue lors de la création de la licence :", error);
         }
     };
-    
-
 
     return (
         <>
@@ -522,8 +505,6 @@ export default function TrackIdPage() {
                                 </button>
                             )}
                         </div>
-
-
                     </div>
                 ) : (
                     <p className="text-center text-gray-500">Chargement...</p>

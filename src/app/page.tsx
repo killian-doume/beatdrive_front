@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Importer useRouter pour la navigation
 import Header from '@/components/header';
 import Partenaire from '@/components/partenaire';
 import Telechargement from '@/components/telechargement';
@@ -23,7 +24,10 @@ export default function Page() {
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
   const [hoveredTrack, setHoveredTrack] = useState<Track | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [search, setSearch] = useState(''); // Gérer la saisie utilisateur pour la recherche
+  const router = useRouter(); // Initialiser useRouter pour naviguer
 
+  // Charger les pistes depuis l'API
   useEffect(() => {
     const fetchTracks = async () => {
       try {
@@ -43,6 +47,7 @@ export default function Page() {
     fetchTracks();
   }, []);
 
+  // Gestion automatique du carrousel
   useEffect(() => {
     if (covers.length > 0 && !isHovered) {
       const interval = setInterval(() => {
@@ -53,9 +58,17 @@ export default function Page() {
     }
   }, [covers, isHovered]);
 
+  // Gérer la lecture d'une piste
   const handlePlayTrack = (track: Track) => {
     setActiveTrack(track);
   };
+
+  const handleSearch = () => {
+    if (search.trim()) {
+      router.push(`/track?search=${encodeURIComponent(search)}`); 
+    }
+  };
+  
 
   const AudioPlayer = ({ track, onClose }: { track: Track; onClose: () => void }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -125,8 +138,13 @@ export default function Page() {
                 type="text"
                 placeholder="Recherchez votre hit..."
                 className="bg-transparent outline-none flex-grow px-2 text-gray-700"
+                value={search} // Liaison avec l'état
+                onChange={(e) => setSearch(e.target.value)} // Mise à jour de l'état
               />
-              <button className="bg-blue-600 p-2 rounded-full w-10 h-10 flex items-center justify-center">
+              <button
+                onClick={handleSearch} // Lancer la recherche
+                className="bg-blue-600 p-2 rounded-full w-10 h-10 flex items-center justify-center"
+              >
                 <FontAwesomeIcon icon={faSearch} className="text-white" />
               </button>
             </div>
