@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
 import Header from "@/components/header";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function UploadTrack() {
   const [titre, setTitre] = useState<string>(""); // Titre
@@ -17,7 +17,6 @@ export default function UploadTrack() {
   const [userId, setUserId] = useState<string>(""); // ID utilisateur
   const [previewCover, setPreviewCover] = useState<string | null>(null); // Aperçu de l'image
   const [previewAudio, setPreviewAudio] = useState<string | null>(null); // Aperçu de l'audio
-  const [showCreationModal, setShowCreationModal] = useState<boolean>(false);
   const router = useRouter(); // Initialisation du routeur
   // Récupérer l'id_user depuis le localStorage
   useEffect(() => {
@@ -44,8 +43,6 @@ export default function UploadTrack() {
       setPreviewAudio(URL.createObjectURL(file));
     }
   };
-
-
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -75,13 +72,13 @@ export default function UploadTrack() {
       return;
     }
 
-    // Obtenez la date d'aujourd'hui au format ISO (par exemple, "2024-11-25T12:34:56.789Z")
+    // Obtenez la date d'aujourd'hui au format ISO
     const today = new Date().toISOString();
 
     // Préparation des données track
     const trackData = {
       titre,
-      date: today, // Utilisation de la date actuelle
+      date: today,
       bpm,
       description,
       cle,
@@ -104,15 +101,39 @@ export default function UploadTrack() {
         credentials: "include",
         body: formData,
       });
-      console.log("Données envoyées :", JSON.stringify(trackData));
 
       if (response.ok) {
         // Traitez la réponse si la requête a réussi
         const result = await response.json();
         console.log("Track créé avec succès :", result);
-        // Afficher le modal de confirmation
-        setShowCreationModal(true);
 
+        // Récupérez l'ID de la track créée
+        const trackId = result?.id_track;
+
+        if (trackId) {
+          console.log("Redirection vers /playlist/" + trackId);
+
+          // Affichez une alerte avec TailwindCSS
+          const alertElement = document.createElement("div");
+          alertElement.innerHTML = `
+          <div class="fixed inset-0 flex items-center justify-center z-50">
+            <div class="p-6 bg-green-100 border border-green-400 text-green-800 rounded-lg shadow-lg max-w-md text-center">
+              <strong class="text-lg block mb-2">Track créée avec succès !</strong>
+              <p class="text-sm">Vous allez être redirigé vers la page de la track pour   <strong class="text-lg block mb-2">Ajouter des licences. !</strong></p>
+            </div>
+          </div>
+        `;
+
+          document.body.appendChild(alertElement);
+
+          // Supprimez l'alerte après 5 secondes et redirigez
+          setTimeout(() => {
+            alertElement.remove();
+            router.push(`/playlist/${trackId}`);
+          }, 5000);
+        } else {
+          alert("Erreur : ID de la track non trouvé.");
+        }
       } else {
         // Affichez un message d'erreur si la requête échoue
         const errorData = await response.text();
@@ -125,8 +146,6 @@ export default function UploadTrack() {
       alert("Une erreur s'est produite lors de la requête.");
     }
   };
-
-
   return (
     <>
       <Header />
@@ -315,25 +334,6 @@ export default function UploadTrack() {
             </button>
           </div>
         </form>
-        {showCreationModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-80">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Création réussie</h2>
-              <p className="text-gray-600 mb-6">
-                La piste <strong>{titre}</strong> a été créée avec succès !
-              </p>
-              <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                onClick={() => {
-                  setShowCreationModal(false);
-                  router.push("/playlist"); // Redirection vers /playlist
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

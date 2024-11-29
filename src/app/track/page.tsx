@@ -156,7 +156,7 @@ export default function TrackPage() {
         const data: LicenceTrack[] = await response.json();
         const priceMapping: { [id_track: number]: string } = {};
         data.forEach((licence) => {
-          if (licence.type === "Non-exclusive") {
+          if (licence.type === "Standart") {
             priceMapping[licence.track.id_track] = licence.prix;
           }
         });
@@ -212,8 +212,10 @@ export default function TrackPage() {
     if (isAlreadyInCart) {
       setNotification(`"${track.titre}" avec la licence "${licenceType}" est déjà dans votre panier.`);
       setTimeout(() => {
-        setNotification(null);
+        setNotification(null); // Supprimer la notification
+        window.location.reload(); // Recharger la page
       }, 3000);
+      
       return;
     }
 

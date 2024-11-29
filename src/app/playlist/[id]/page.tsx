@@ -179,7 +179,11 @@ export default function TrackIdPage() {
                 }
             }
             setNotification("Licences mises à jour avec succès !");
-            setTimeout(() => setNotification(null), 3000);
+            setTimeout(() => {
+                setNotification(null); // Supprimer la notification
+                window.location.reload(); // Recharger la page
+              }, 3000);
+              
         } catch (error) {
             console.error("Erreur inattendue lors de la mise à jour des licences :", error);
         }
@@ -219,7 +223,7 @@ export default function TrackIdPage() {
                 console.log("Nouvelle licence créée avec la valeur : {}", createdLicence);
                 setTimeout(() => {
                     setNotification(null);
-                    window.location.reload(); // Recharger la page après succès
+                  
                 }, 3000);
             } else {
                 console.error("Erreur lors de la création de la licence :", response.statusText);

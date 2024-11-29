@@ -76,7 +76,7 @@ export default function TrackPage() {
   const [visibleTracks, setVisibleTracks] = useState<Track[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true); // Vérifie l'accès
-
+  const [trackToDelete, setTrackToDelete] = useState<Track | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -126,6 +126,21 @@ export default function TrackPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!trackToDelete) return;
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track/${trackToDelete.id_track}`, {
+        method: "DELETE",
+      });
+      setTracks(tracks.filter((t) => t.id_track !== trackToDelete.id_track));
+      setVisibleTracks(visibleTracks.filter((t) => t.id_track !== trackToDelete.id_track));
+      setTrackToDelete(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
   // Afficher la page d'erreur si non autorisé
   if (!isAuthorized) {
     return <PageError message="Vous devez être un beatmaker pour accéder à cette page." />;
@@ -142,7 +157,6 @@ export default function TrackPage() {
                 key={track.id_track}
                 className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center hover:shadow-xl transition-shadow duration-300 text-white"
               >
-                {/* Titre au-dessus de la photo */}
                 <p className="text-black font-semibold text-lg mb-2">{track.titre}</p>
                 <div className="relative w-full h-48 mb-4 group">
                   <img
@@ -157,18 +171,44 @@ export default function TrackPage() {
                     <FontAwesomeIcon icon={faPlay} />
                   </button>
                 </div>
-
                 <a
                   href={`/playlist/${track.id_track}`}
                   className="bg-indigo-600 text-white w-full px-6 py-2 rounded-md hover:bg-indigo-500 flex items-center justify-center gap-2"
                 >
                   Modifier
                 </a>
+                <button
+                  onClick={() => setTrackToDelete(track)}
+                  className="bg-red-600 text-white w-full px-6 py-2 rounded-md hover:bg-red-500 mt-2"
+                >
+                  Supprimer
+                </button>
               </div>
             ))}
           </div>
         </div>
       </div>
+      {trackToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg text-center">
+            <p className="text-lg font-semibold text-black mb-4">Êtes-vous sûr de vouloir supprimer cette track ?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleDelete}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-500"
+              >
+                Supprimer
+              </button>
+              <button
+                onClick={() => setTrackToDelete(null)}
+                className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {activeTrack && <AudioPlayer track={activeTrack} onClose={() => setActiveTrack(null)} />}
     </>
   );
