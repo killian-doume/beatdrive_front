@@ -76,7 +76,7 @@ export default function Pricing() {
                     'mt-6 block w-full rounded-md py-2 text-center text-sm font-semibold'
                   )}
                 >
-                  {tier.name === 'Exclusive' ? 'Contactez-nous' : 'Acheter'}
+                  {tier.name === 'Exclusive' ? 'Acheter' : 'Acheter'}
                 </a>
                 <ul role="list" className="mt-6 space-y-3 text-sm leading-6 text-gray-600">
                   {tier.features.map((feature) => (

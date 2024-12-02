@@ -109,6 +109,8 @@ export default function MonCompte() {
 
       const data = await response.json();
       setCommandes(data);
+
+
     } catch (error) {
       console.log("Erreur:", error);
     } finally {
@@ -361,6 +363,7 @@ export default function MonCompte() {
                       <th className="px-4 py-2">Date</th>
                       <th className="px-4 py-2">Nombre Total</th>
                       <th className="px-4 py-2">Prix Total</th>
+                      {/* <th className="px-4 py-2">Voir details</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -370,6 +373,7 @@ export default function MonCompte() {
                           <td className="px-4 py-2">{commande.date}</td>
                           <td className="px-4 py-2">{commande.nombre_total}</td>
                           <td className="px-4 py-2">{Number(commande.prix_total).toFixed(2)} €</td>
+                          {/* <td className="px-4 py-2"></td> */}
                         </tr>
                       ))
                     ) : (
