@@ -11,9 +11,36 @@ interface CartItem {
   bpm: string;
   date: string;
 }
+interface User {
+  nom: string;
+  prenom: string;
+  email: string;
+  username: string;
+  telephone: string;
+  pseudo: string;
+  adresse_facturation: string | null;
+  adresse_livraison: string | null;
+  avatar: string | null;
+  type: string;
+  id_user: number;
+}
 
 export default function Panier() {
   const [products, setProducts] = useState<CartItem[]>([]);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
+  const [user, setUser] = useState<User>({
+    nom: "",
+    prenom: "",
+    email: "",
+    username: "",
+    telephone: "",
+    pseudo: "",
+    adresse_facturation: "",
+    adresse_livraison: "",
+    avatar: null,
+    type: "",
+    id_user: 0,
+  });
 
   useEffect(() => {
     const cart = localStorage.getItem('cart');
@@ -41,6 +68,55 @@ export default function Panier() {
   const calculateTotalPrice = () => {
     return products.reduce((total, product) => total + parseFloat(product.price), 0).toFixed(2);
   };
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+
+      setUser({
+        nom: parsedUser.nom || "",
+        prenom: parsedUser.prenom || "",
+        email: parsedUser.email || "",
+        username: parsedUser.username || "",
+        telephone: parsedUser.telephone || "",
+        pseudo: parsedUser.pseudo || "",
+        adresse_facturation: parsedUser.adresse_facturation || "",
+        adresse_livraison: parsedUser.adresse_livraison || "",
+        avatar: parsedUser.avatar || null,
+        type: parsedUser.type || "",
+        id_user: parsedUser.id_user,
+      });
+    } else {
+      console.log("Aucun utilisateur trouvé dans le localStorage");
+      setIsAuthorized(false);
+    }
+  }, []);
+  if (!isAuthorized) {
+    return (
+      <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
+        <div className="text-center">
+          <h1 className="mt-4 text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
+            Accès interdit
+          </h1>
+          <p className="mt-6 text-lg font-medium text-gray-500">
+            Vous devez être connecté pour accéder à cette page.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-x-6">
+            <a
+              href="/login"
+              className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Aller à la page de connexion
+            </a>
+            <a href="/" className="text-sm font-semibold text-gray-900">
+              Retourner à l'accueil <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <div className="bg-white">
