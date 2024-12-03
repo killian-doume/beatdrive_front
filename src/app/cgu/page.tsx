@@ -11,7 +11,7 @@ const CGU = () => {
   return (
     <>
      <Header/>
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-6 py-12 text-black">
         <h1 className="text-4xl font-bold text-center mb-8">Conditions Générales d'Utilisation</h1>
         <p className="text-gray-600 mb-6">Dernière mise à jour : {today}</p>
 
